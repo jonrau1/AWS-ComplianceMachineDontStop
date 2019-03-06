@@ -26,7 +26,7 @@ resource "aws_kms_key" "trailkey" { // REVIEW POLICY FOR PRINCIPALS, ALSO ADD IN
             "Effect": "Allow",
             "Principal": {"AWS": [
                 "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
-                "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/Admin" // CHANGE YOUR ADMIN USER
+                "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${aws_iam_user.key_admin_user.name}" 
             ]},
             "Action": "kms:*",
             "Resource": "*"
@@ -94,12 +94,83 @@ resource "aws_kms_key" "configkey" {
   description             = "KMS Key For Config Bucket & SNS"
   deletion_window_in_days = 30
   enable_key_rotation = true
+  policy = <<POLICY
+{
+    "Version": "2012-10-17",
+    "Id": "key-consolepolicy-3",
+    "Statement": [
+        {
+            "Sid": "Enable IAM User Permissions",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+            },
+            "Action": "kms:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow access for Key Administrators",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${aws_iam_user.key_admin_user.name}"
+                ]
+            },
+            "Action": [
+                "kms:Create*",
+                "kms:Describe*",
+                "kms:Enable*",
+                "kms:List*",
+                "kms:Put*",
+                "kms:Update*",
+                "kms:Revoke*",
+                "kms:Disable*",
+                "kms:Get*",
+                "kms:Delete*",
+                "kms:TagResource",
+                "kms:UntagResource",
+                "kms:ScheduleKeyDeletion",
+                "kms:CancelKeyDeletion"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow sns access",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "sns.amazonaws.com"
+            },
+            "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey",
+                "kms:Encrypt"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+POLICY
 }
 
 resource "aws_kms_key" "logbucketkey" {
   description             = "KMS Key for S3 server access log bucket"
   deletion_window_in_days = 30
   enable_key_rotation = true
+}
+
+resource "aws_kms_alias" "trailkeyalis" {
+  name          = "alias/CloudTrailKey"
+  target_key_id = "${aws_kms_key.trailkey.arn}"
+}
+
+resource "aws_kms_alias" "configkeyalis" {
+  name          = "alias/ConfigKey"
+  target_key_id = "${aws_kms_key.configkey.arn}"
+}
+
+resource "aws_kms_alias" "logbucketkeyalis" {
+  name          = "alias/S3ServerLogKey"
+  target_key_id = "${aws_kms_key.logbucketkey.arn}"
 }
 
 resource "aws_inspector_resource_group" "inspect-group" {
@@ -140,10 +211,91 @@ resource "aws_inspector_assessment_template" "inspect-temp" {
   ]
 }
 
+resource "aws_config_configuration_recorder" "config-recorder" {
+  name     = "ThisIsAConfigRecorder"
+  role_arn = "${aws_iam_role.configrole.arn}"
+
+  recording_group = {
+    all_supported                 = true
+    include_global_resource_types = true
+  }
+}
+
 resource "aws_config_configuration_recorder_status" "config-status" {
   name       = "${aws_config_configuration_recorder.config-recorder.name}"
   is_enabled = true
   depends_on = ["aws_config_delivery_channel.config-delivchan"]
+}
+
+resource "aws_config_delivery_channel" "config-delivchan" {
+  name           = "compliancemachineconfigdeliv"
+  s3_bucket_name = "${aws_s3_bucket.b.bucket}"
+  sns_topic_arn = "${aws_sns_topic.config-sns.id}"
+}
+
+resource "aws_sns_topic" "config-sns" {
+  name = "CloudGovSNSConfig"
+  kms_master_key_id = "${aws_kms_key.configkey.id}"
+  policy = <<POLICY
+{
+  "Id": "Policy_ID",
+  "Statement": [
+    {
+      "Sid": "AWSConfigSNSPolicy",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "${aws_iam_role.configrole.arn}"
+      },
+      "Action": "SNS:Publish",
+      "Resource": "arn:aws:sns::${data.aws_caller_identity.current.account_id}:AlphaSNSConfig"
+    }
+  ]
+}
+POLICY
+}
+
+
+resource "aws_iam_role" "configrole" {
+  name = "ThisIsAWSConfigRole"
+
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "config.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_iam_role_policy" "configpolicy" {
+  name = "ThisIsAWSConfigRolePolicy"
+  role = "${aws_iam_role.configrole.id}"
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "s3:*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "${aws_s3_bucket.b.arn}",
+        "${aws_s3_bucket.b.arn}/*"
+      ]
+    }
+  ]
+}
+POLICY
 }
 
 resource "aws_iam_role_policy_attachment" "a" {
@@ -191,65 +343,6 @@ resource "aws_s3_bucket" "b" {
   }
 }
 
-resource "aws_config_delivery_channel" "config-delivchan" {
-  name           = "compliancemachineconfigdeliv"
-  s3_bucket_name = "${aws_s3_bucket.b.bucket}"
-  sns_topic_arn = "${aws_sns_topic.config-sns.id}"
-}
-
-resource "aws_sns_topic" "config-sns" {
-  name = "ThisIsAConfigSNSTopic"
-  kms_master_key_id = "${aws_kms_key.configkey.id}" // put a KMS Key Here & share it with your config bucket
-}
-
-resource "aws_config_configuration_recorder" "config-recorder" {
-  name     = "ThisIsAConfigRecorder"
-  role_arn = "${aws_iam_role.configrole.arn}"
-}
-
-resource "aws_iam_role" "configrole" {
-  name = "ThisIsAWSConfigRole"
-
-  assume_role_policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "config.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-POLICY
-}
-
-resource "aws_iam_role_policy" "configpolicy" {
-  name = "ThisIsAWSConfigRolePolicy"
-  role = "${aws_iam_role.configrole.id}"
-
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "s3:*"
-      ],
-      "Effect": "Allow",
-      "Resource": [
-        "${aws_s3_bucket.b.arn}",
-        "${aws_s3_bucket.b.arn}/*"
-      ]
-    }
-  ]
-}
-POLICY
-}
-
 resource "aws_securityhub_account" "sechub" {}
 // Hits SecHub API - turns it on for account Auto-Enables CIS Benchmark Rules -- need to turn on config first
 
@@ -260,7 +353,7 @@ resource "aws_securityhub_account" "sechub" {}
 
 resource "aws_sns_topic" "stacksns" {
   name = "ThisIsAConfigSNSTopic"
-  kms_master_key_id = "alias/aws/sns" // put a KMS Key Here & share it with your config bucket
+  kms_master_key_id = "${aws_kms_key.configkey.id}" 
 }
 
 resource "aws_cloudwatch_log_group" "yada" {
@@ -1061,7 +1154,7 @@ resource "aws_network_acl" "vpcmain-nacl" {
     rule_no    = 400
     action     = "allow"
     cidr_block = "0.0.0.0/0"
-    from_port  = 4995
+    from_port  = 30000
     to_port    = 65535
   }
 
@@ -1070,7 +1163,7 @@ resource "aws_network_acl" "vpcmain-nacl" {
     rule_no    = 400
     action     = "allow"
     cidr_block = "0.0.0.0/0"
-    from_port  = 4995
+    from_port  = 30000
     to_port    = 65535
   }
   
@@ -1188,4 +1281,47 @@ resource "aws_iam_role_policy" "flowrolepolicy" {
   ]
 }
 EOF
+}
+
+resource "aws_iam_group" "key_admin_group" {
+  name = "AlphaCryptoOfficers"
+}
+
+resource "aws_iam_policy" "key_admin_policy" {
+  name        = "AlphaCryptoOfficerPolicy"
+  path        = "/"
+  description = "Key Administrator Role"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": "kms:*",
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_group_policy_attachment" "key_admin_attachment" {
+  group      = "${aws_iam_group.key_admin_group.name}"
+  policy_arn = "${aws_iam_policy.key_admin_policy.arn}"
+}
+
+resource "aws_iam_group_membership" "key_admin_membership" {
+  name = "cryptoofficerjoin"
+
+  users = [
+    "${aws_iam_user.key_admin_user.name}"
+  ]
+
+  group = "${aws_iam_group.key_admin_group.name}"
+}
+
+resource "aws_iam_user" "key_admin_user" {
+  name = "CryptoOfficer"
 }
