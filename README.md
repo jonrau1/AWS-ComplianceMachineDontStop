@@ -1,5 +1,5 @@
 # AWS Compliance Machine Don't Stop!
-##### Proof of Value Terraform Scripts to utilize Amazon Web Services Managed Security, Governance & Identity Services to Support your AWS Account Security Posture. 
+#### Proof of Value Terraform Scripts to utilize Amazon Web Services Managed Security, Governance & Identity Services to Support your AWS Account Security Posture. 
 These Terraform Scripts are made with using the Preview of AWS Security Hub in Mind. Security Hub collects Information from GuardDuty, Macie, Inspector as well as AWS Config. Security Hub (the Preview at least) comes with Center for Internet Security (CIS) Config Rules that follow best security practices for account-wide security posture. The Services that are turned on, as well as the inline CloudFormation Stack are all made to support these CIS Rules from Security Hub, and also go a good way towards general security hardening for your account. Services that are used are listed later in the Readme, this is also a work in progress and other features may be added such as Amazon Macie, AWS WAF, and Custom Lambda Functions / CloudWatch Events to further Support Security Posture on AWS.
 
 ## Getting Started
