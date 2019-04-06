@@ -8,10 +8,12 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - The Region Your Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config turned on
 
 ### AWS Services Used
-Following Services will be Utilizied
-- AWS Config
-- AWS CloudWatch Logs
-- AWS CloudTrail
+- AWS Config (https://aws.amazon.com/config/)
+    - A service that enables you to assess, audit, and evaluate the configurations of your AWS resources.
+- AWS CloudWatch Logs (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
+    - Used to monitor, store, and access your log files from Amazon Elastic Compute Cloud (Amazon EC2) instances, AWS CloudTrail, Route 53, and other sources.
+- AWS CloudTrail (https://aws.amazon.com/cloudtrail/)
+    - A service that enables governance, compliance, operational auditing, and risk auditing of your AWS account
 - AWS IAM
 - AWS Inspector
 - AWS SNS
@@ -25,7 +27,7 @@ Following Services will be Utilizied
 **Below Steps are Done on a Fresh Install of Ubuntu 18.04LTS**
 1. Install Unzip
 `sudo apt-get install unzip`
-2. Grab the Latest Version of Terraform for your OS(https://www.terraform.io/downloads.html)
+2. Grab the Latest Version of Terraform (https://www.terraform.io/downloads.html)
 `wget https://releases.hashicorp.com/terraform/0.11.13/terraform_0.11.13_linux_amd64.zip`
 3. Unzip Terraform Installation
 `unzip terraform_0.11.13_linux_amd64.zip`
@@ -38,7 +40,7 @@ Following Services will be Utilizied
 1. Create & Navigate to a New Directory
 `mkdir aws-cmds && cd aws-cmds`
 2. Clone this Repo
-`git clone https://github.com/jonrau1/AWS-ComplianceMachineDontStop`
+`git clone https://github.com/jonrau1/AWS-ComplianceMachineDontStop.git`
 3. Create your Provider (see above for Link)
 `nano provider.tf`
 4. Fill out the *variables.tf* file
