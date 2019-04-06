@@ -9,7 +9,7 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - Basic Level Understanding of how AWS Security, Identity & Compliance Services Work with One Another
 - Basic Knowledge of Terraform Concepts & Commands Expertise (and Somewhere to Use it from)
 - Your own provider.tf file (https://www.terraform.io/docs/providers/aws/)
-- The Region Your Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config turned on
+- The Region You Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config Enabled!
 
 ### AWS Services Used
 - AWS Config (https://aws.amazon.com/config/)
@@ -58,6 +58,8 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 4. Fill out the *variables.tf* file
 `nano variables.tf`
 
+*NOTE* variables.tf has a `list` within for US-EAST-1 Region Amazon Inspector ARNs for the Rules Packages -- you will need to modify that whole list for regions outside of US-EAST-1
+
 ### Deploying
 1. Initialize your AWS Provider
 `terraform init`
@@ -73,3 +75,33 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - Filling Out Variables.tf for you (mostly)
 - .tfvars
 - Macie -- Terraform currently does not support Activating Macie, only subscribing Buckets to Scan to Macie
+
+## Next Steps
+This Proof of Value is only a small step towards an excellent Security Posture for your AWS Accounts. A Multitude of other Security, Identity & Compliance solutions are available to complement the above deployed Services, such as WAF, Macie, SSO, Directory Services, ACM, Secrets Manager, Cognito and Firewall Manager. The proper privacy-by-design and security-by-design for Software Development, Application Lifecycle and Architecture must be also be followed to ensure a hardened state, which this PoV does not supply.
+
+### High-Level Reading
+- https://aws.amazon.com/architecture/well-architected/
+- https://aws.amazon.com/security/
+- https://aws.amazon.com/blogs/security/ 
+- https://docs.aws.amazon.com/aws-technical-content/latest/aws-governance-at-scale/introduction.html
+- https://aws.amazon.com/compliance/hipaa-compliance/
+- https://aws.amazon.com/compliance/pci-dss-level-1-faqs/
+- https://aws.amazon.com/compliance/soc-faqs/
+- https://aws.amazon.com/blogs/security/the-top-10-most-downloaded-aws-security-and-compliance-documents-in-2017/
+
+### Security Whitepapers & Workbooks
+- https://d1.awsstatic.com/whitepapers/compliance/AWS_Anitian_Workbook_PCI_Cloud_Compliance.pdf
+- https://d1.awsstatic.com/whitepapers/compliance/AWS_HIPAA_Compliance_Whitepaper.pdf
+- https://d0.awsstatic.com/whitepapers/Security/AWS_Security_Best_Practices.pdf
+- https://d0.awsstatic.com/whitepapers/Security/DDoS_White_Paper.pdf
+- https://d0.awsstatic.com/whitepapers/Security/aws-waf-owasp.pdf
+- https://d0.awsstatic.com/whitepapers/compliance/AWS_Risk_and_Compliance_Whitepaper.pdf
+- https://d0.awsstatic.com/whitepapers/compliance/AWS_Auditing_Security_Checklist.pdf
+- https://aws.amazon.com/blogs/security/new-whitepaper-achieving-operational-resilience-in-the-financial-sector-and-beyond/
+
+### AWS Security Solutions & Reference Architecture
+- https://aws.amazon.com/blogs/security/how-to-visualize-amazon-guardduty-findings-serverless-edition/
+- https://aws.amazon.com/blogs/security/how-to-visualize-and-refine-your-networks-security-by-adding-security-group-ids-to-your-vpc-flow-logs/
+- https://aws.amazon.com/blogs/security/how-to-use-amazon-guardduty-and-aws-web-application-firewall-to-automatically-block-suspicious-hosts/
+- https://aws.amazon.com/blogs/security/how-to-remediate-amazon-inspector-security-findings-automatically/
+- https://aws.amazon.com/blogs/security/how-to-set-up-continuous-golden-ami-vulnerability-assessments-with-amazon-inspector/?nc1=b_rp
