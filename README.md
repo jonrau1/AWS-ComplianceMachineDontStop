@@ -56,6 +56,6 @@ Following Services will be Utilizied
 
 ### Out of Scope
 - Provider.tf
-- Filling our Variables.tf for you (mostly)
+- Filling Out Variables.tf for you (mostly)
 - .tfvars
 - Macie -- Terraform currently does not support Activating Macie, only subscribing Buckets to Scan to Macie
