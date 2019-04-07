@@ -163,7 +163,7 @@ resource "aws_inspector_assessment_template" "Inspector_Assessment_Template" {
   target_arn = "${aws_inspector_assessment_target.Inspector_Assessment_Target_All.arn}"
   duration   = 3600
 
-  rules_package_arns = "${var.InspectorAssessmentRulesPackages_USEast1}"
+  rules_package_arns = "${var.InspectorAssessmentRulesPackages_USWest1}"
 }
 resource "aws_config_configuration_recorder" "Config_Configuration_Recorder" {
   name     = "${var.ConfigurationRecorderName}"
@@ -176,7 +176,7 @@ resource "aws_config_configuration_recorder" "Config_Configuration_Recorder" {
 }
 resource "aws_config_delivery_channel" "Config_Configuration_Delivery_Channel" {
   name           = "${var.ConfigurationDeliveryChannelName}"
-  s3_bucket_name = "${aws_s3_bucket.Config_Artifacts_S3_Bucket.name}"
+  s3_bucket_name = "${aws_s3_bucket.Config_Artifacts_S3_Bucket.bucket}"
   sns_topic_arn = "${aws_sns_topic.Config_SNS_Topic.id}"
 }
 resource "aws_config_configuration_recorder_status" "Config_Configuration_Recorder_Status" {
@@ -206,7 +206,6 @@ POLICY
 }
 resource "aws_iam_role" "Config_IAM_Role" {
   name = "${var.ConfigIAMRoleName}"
-
   assume_role_policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -217,7 +216,7 @@ resource "aws_iam_role" "Config_IAM_Role" {
         "Service": "config.amazonaws.com"
       },
       "Effect": "Allow",
-      "Sid": ""
+      "Sid": "thisissid028129128"
     }
   ]
 }
@@ -226,29 +225,149 @@ POLICY
 resource "aws_iam_role_policy" "Config_Role_Policy" {
   name = "${var.ConfigIAMRolePolicyName}"
   role = "${aws_iam_role.Config_IAM_Role.id}"
-
   policy = <<POLICY
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Action": [
-        "s3:*"
-      ],
+      "Sid": "Stmt1554678006121",
+      "Action": "s3:*",
       "Effect": "Allow",
       "Resource": [
         "${aws_s3_bucket.Config_Artifacts_S3_Bucket.arn}",
         "${aws_s3_bucket.Config_Artifacts_S3_Bucket.arn}/*"
       ]
+    },
+    {
+      "Sid": "Stmt1554678078717",
+      "Action": [
+        "sns:Publish"
+      ],
+      "Effect": "Allow",
+      "Resource": "${aws_sns_topic.Config_SNS_Topic.id}"
+    },
+    {
+      "Sid": "Stmt1554678147797",
+      "Action": [
+        "cloudtrail:DescribeTrails",
+                "cloudtrail:GetEventSelectors",
+                "ec2:Describe*",
+                "config:Put*",
+                "config:Get*",
+                "config:List*",
+                "config:Describe*",
+                "config:BatchGet*",
+                "cloudtrail:GetTrailStatus",
+                "cloudtrail:ListTags",
+                "iam:GenerateCredentialReport",
+                "iam:GetCredentialReport",
+                "iam:GetAccountAuthorizationDetails",
+                "iam:GetAccountPasswordPolicy",
+                "iam:GetAccountSummary",
+                "iam:GetGroup",
+                "iam:GetGroupPolicy",
+                "iam:GetPolicy",
+                "iam:GetPolicyVersion",
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:GetUser",
+                "iam:GetUserPolicy",
+                "iam:ListAttachedGroupPolicies",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListAttachedUserPolicies",
+                "iam:ListEntitiesForPolicy",
+                "iam:ListGroupPolicies",
+                "iam:ListGroupsForUser",
+                "iam:ListInstanceProfilesForRole",
+                "iam:ListPolicyVersions",
+                "iam:ListRolePolicies",
+                "iam:ListUserPolicies",
+                "iam:ListVirtualMFADevices",
+                "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DescribeLoadBalancerAttributes",
+                "elasticloadbalancing:DescribeLoadBalancerPolicies",
+                "elasticloadbalancing:DescribeTags",
+                "acm:DescribeCertificate",
+                "acm:ListCertificates",
+                "acm:ListTagsForCertificate",
+                "rds:DescribeDBInstances",
+                "rds:DescribeDBSecurityGroups",
+                "rds:DescribeDBSnapshotAttributes",
+                "rds:DescribeDBSnapshots",
+                "rds:DescribeDBSubnetGroups",
+                "rds:DescribeEventSubscriptions",
+                "rds:ListTagsForResource",
+                "rds:DescribeDBClusters",
+                "s3:GetAccelerateConfiguration",
+                "s3:GetBucketAcl",
+                "s3:GetBucketCORS",
+                "s3:GetBucketLocation",
+                "s3:GetBucketLogging",
+                "s3:GetBucketNotification",
+                "s3:GetBucketPolicy",
+                "s3:GetBucketRequestPayment",
+                "s3:GetBucketTagging",
+                "s3:GetBucketVersioning",
+                "s3:GetBucketWebsite",
+                "s3:GetLifecycleConfiguration",
+                "s3:GetReplicationConfiguration",
+                "s3:ListAllMyBuckets",
+                "s3:ListBucket",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:GetAccountPublicAccessBlock",
+                "redshift:DescribeClusterParameterGroups",
+                "redshift:DescribeClusterParameters",
+                "redshift:DescribeClusterSecurityGroups",
+                "redshift:DescribeClusterSnapshots",
+                "redshift:DescribeClusterSubnetGroups",
+                "redshift:DescribeClusters",
+                "redshift:DescribeEventSubscriptions",
+                "redshift:DescribeLoggingStatus",
+                "dynamodb:DescribeLimits",
+                "dynamodb:DescribeTable",
+                "dynamodb:ListTables",
+                "dynamodb:ListTagsOfResource",
+                "cloudwatch:DescribeAlarms",
+                "application-autoscaling:DescribeScalableTargets",
+                "application-autoscaling:DescribeScalingPolicies",
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribeLifecycleHooks",
+                "autoscaling:DescribePolicies",
+                "autoscaling:DescribeScheduledActions",
+                "autoscaling:DescribeTags",
+                "lambda:GetFunction",
+                "lambda:GetPolicy",
+                "lambda:ListFunctions",
+                "lambda:GetAlias",
+                "lambda:ListAliases",
+                "waf-regional:GetWebACLForResource",
+                "waf-regional:GetWebACL",
+                "cloudfront:ListTagsForResource",
+                "guardduty:ListDetectors",
+                "guardduty:GetMasterAccount",
+                "guardduty:GetDetector",
+                "codepipeline:ListPipelines",
+                "codepipeline:GetPipeline",
+                "codepipeline:GetPipelineState",
+                "kms:ListKeys",
+                "kms:GetKeyRotationStatus",
+                "kms:DescribeKey",
+                "ssm:DescribeDocument",
+                "ssm:GetDocument",
+                "ssm:DescribeAutomationExecutions",
+                "ssm:GetAutomationExecution",
+                "shield:DescribeProtection"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
     }
   ]
 }
 POLICY
 }
-resource "aws_iam_role_policy_attachment" "Config_IAM_Policy_Attachment" {
-  role       = "${aws_iam_role.Config_IAM_Role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/service-role/${var.ConfigIAMRolePolicyName}"
-}
+
 resource "aws_s3_bucket" "Server_Access_Log_S3_Bucket" {
   bucket = "${var.ServerAccessLogS3BucketName}"
   acl    = "log-delivery-write"

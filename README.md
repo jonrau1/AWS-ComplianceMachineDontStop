@@ -12,27 +12,27 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - The Region You Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config Enabled!
 
 ### AWS Services Used
-- AWS Config (https://aws.amazon.com/config/)
+- **Config** (https://aws.amazon.com/config/)
     - A service that enables you to assess, audit, and evaluate the configurations of your AWS resources
-- AWS CloudWatch Logs (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
+- **CloudWatch Logs** (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
     - Used to monitor, store, and access your log files from Amazon Elastic Compute Cloud (Amazon EC2) instances, AWS CloudTrail, Route 53, and other sources
-- AWS CloudTrail (https://aws.amazon.com/cloudtrail/)
+- **CloudTrail** (https://aws.amazon.com/cloudtrail/)
     - A service that enables governance, compliance, operational auditing, and risk auditing of your AWS account
-- AWS IAM (https://aws.amazon.com/iam/)
+- **IAM** (https://aws.amazon.com/iam/)
     - Enables you to manage access to AWS services and resources securely
-- AWS Inspector (https://aws.amazon.com/inspector/)
+- **Inspector** (https://aws.amazon.com/inspector/)
     - Automated security assessment service that helps improve the security and compliance of applications deployed on AWS. Amazon Inspector automatically assesses applications for exposure, vulnerabilities, and deviations from best practices
-- AWS SNS (https://aws.amazon.com/sns/)
+- **SNS** (https://aws.amazon.com/sns/)
     - A highly available, durable, secure, fully managed pub/sub messaging service that enables you to decouple microservices, distributed systems, and serverless applications
-- AWS S3 (https://aws.amazon.com/s3/)
+- **S3** (https://aws.amazon.com/s3/)
     - An object storage service that offers industry-leading scalability, data availability, security, and performance. This means customers of all sizes and industries can use it to store and protect any amount of data for a range of use cases, such as websites, mobile applications, backup and restore, archive, enterprise applications, IoT devices, and big data analytics
-- AWS KMS (https://aws.amazon.com/kms/)
+- **KMS** (https://aws.amazon.com/kms/)
     - KMS makes it easy for you to create and manage keys and control the use of encryption across a wide range of AWS services and in your applications. AWS KMS is a secure and resilient service that uses FIPS 140-2 validated hardware security modules to protect your keys
-- AWS Security Hub (https://aws.amazon.com/security-hub/)
+- **Security Hub** (https://aws.amazon.com/security-hub/)
     - Security Hub gives you a comprehensive view of your high-priority security alerts and compliance status across AWS accounts
-- AWS CloudFormation (https://aws.amazon.com/cloudformation/)
+- **CloudFormation** (https://aws.amazon.com/cloudformation/)
     - CloudFormation provides a common language for you to describe and provision all the infrastructure resources in your cloud environment. CloudFormation allows you to use a simple text file to model and provision, in an automated and secure manner, all the resources needed for your applications across all regions and accounts
-- AWS GuardDuty (https://aws.amazon.com/guardduty/)
+- **GuardDuty** (https://aws.amazon.com/guardduty/)
     - A threat detection service that continuously monitors for malicious activity and unauthorized behavior to protect your AWS accounts and workloads
 
 ### Prerequisites:
@@ -58,7 +58,7 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 4. Fill out the *variables.tf* file
 `nano variables.tf`
 
-*NOTE* variables.tf has a `list` within for US-EAST-1 Region Amazon Inspector ARNs for the Rules Packages -- you will need to modify that whole list for regions outside of US-EAST-1
+#### NOTE variables.tf has a `list` within for US-EAST-1 and US-WEST-1 Regions for Amazon Inspector ARNs for the Rules Packages -- you will need to modify that whole list for regions outside of US-EAST-1/US-WEST-1 and note the correct variable within main.tf
 
 ### Deploying
 1. Initialize your AWS Provider
@@ -69,6 +69,9 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 `terraform apply`
 4. Deploy
 `yes`
+5. Navigate to AWS Config Console & Finish Setup
+    - Ensure you use your Created Role & Not the Service Linked Role
+    - Navigate to Settings and then click Save for additional resources to be added into IAM Role Policy
 
 ### Out of Scope
 - Provider.tf
@@ -78,6 +81,11 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 
 ## Next Steps
 This Proof of Value is only a small step towards an excellent Security Posture for your AWS Accounts. A Multitude of other Security, Identity & Compliance solutions are available to complement the above deployed Services, such as WAF, Macie, SSO, Directory Services, ACM, Secrets Manager, Cognito and Firewall Manager. The proper privacy-by-design and security-by-design for Software Development, Application Lifecycle and Architecture must be also be followed to ensure a hardened state, which this PoV does not supply.
+
+### Modifications to Deployment
+- Add AWS-Managed / Custom Config Rules to your AWS Config Setup
+- Add Customer Providers into Security Hub / GuardDuty from Marketplace
+- Attach SNS Topic to your Inspector Assessment Target Group (Terraform does not yet support this)
 
 ### High-Level Reading
 - https://aws.amazon.com/architecture/well-architected/
