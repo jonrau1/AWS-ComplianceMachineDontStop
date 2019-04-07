@@ -47,6 +47,16 @@ variable "InspectorAssessmentRulesPackages_USEast1" {
    "arn:aws:inspector:us-east-1:316112463485:rulespackage/0-gBONHN9h", // RBA (Runtime Behavior Analytics)
    ]
 }
+variable "InspectorAssessmentRulesPackages_USWest1" {
+  type = "list"
+  default = [
+   "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-TKgzoVOa", // NIST Common Vulnerability & Exposures (CVEs)
+   "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-xUY8iRqX", // CIS OpSys Security Configuration Benchmark
+   "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-TxmXimXF", // AWS Security Best Practices
+   "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-byoQRFYm", // Network Reachability
+   "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-yeYxlt0x", // RBA (Runtime Behavior Analytics)
+   ]
+}
 variable "ConfigurationRecorderName" {
   default = ""
 }
