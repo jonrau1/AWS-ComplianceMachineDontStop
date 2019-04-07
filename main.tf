@@ -16,7 +16,7 @@ resource "aws_kms_key" "CloudTrail_Customer_CMK" {
             "Effect": "Allow",
             "Principal": {"AWS": [
                 "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
-                "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${aws_iam_user.key_admin_user.name}" 
+                "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${aws_iam_user.KMS_Key_Admin_IAM_User.name}" 
             ]},
             "Action": "kms:*",
             "Resource": "*"
@@ -102,7 +102,7 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
-                    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${aws_iam_user.key_admin_user.name}"
+                    "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${aws_iam_user.KMS_Key_Admin_IAM_User.name}"
                 ]
             },
             "Action": [
@@ -167,7 +167,7 @@ resource "aws_inspector_assessment_template" "Inspector_Assessment_Template" {
 }
 resource "aws_config_configuration_recorder" "Config_Configuration_Recorder" {
   name     = "${var.ConfigurationRecorderName}"
-  role_arn = "${aws_iam_role.configrole.arn}"
+  role_arn = "${aws_iam_role.Config_IAM_Role.arn}"
 
   recording_group = {
     all_supported                 = true
@@ -186,7 +186,7 @@ resource "aws_config_configuration_recorder_status" "Config_Configuration_Record
 }
 resource "aws_sns_topic" "Config_SNS_Topic" {
   name = "${var.ConfigSNSTopicName}"
-  kms_master_key_id = "${aws_kms_key.configkey.id}"
+  kms_master_key_id = "${aws_kms_key.SNS_Customer_CMK.id}"
   policy = <<POLICY
 {
   "Id": "Policy_ID",
@@ -225,7 +225,7 @@ POLICY
 }
 resource "aws_iam_role_policy" "Config_Role_Policy" {
   name = "${var.ConfigIAMRolePolicyName}"
-  role = "${aws_iam_role.configrole.id}"
+  role = "${aws_iam_role.Config_IAM_Role.id}"
 
   policy = <<POLICY
 {
@@ -246,7 +246,7 @@ resource "aws_iam_role_policy" "Config_Role_Policy" {
 POLICY
 }
 resource "aws_iam_role_policy_attachment" "Config_IAM_Policy_Attachment" {
-  role       = "${aws_iam_role.Config_Role_Policy.name}"
+  role       = "${aws_iam_role.Config_IAM_Role.name}"
   policy_arn = "arn:aws:iam::aws:policy/service-role/${var.ConfigIAMRolePolicyName}"
 }
 resource "aws_s3_bucket" "Server_Access_Log_S3_Bucket" {
@@ -274,7 +274,7 @@ resource "aws_s3_bucket" "Config_Artifacts_S3_Bucket" {
   }
 
   logging {
-    target_bucket = "${aws_s3_bucket.log_bucket.id}"
+    target_bucket = "${aws_s3_bucket.Server_Access_Log_S3_Bucket.id}"
   }
 
   server_side_encryption_configuration {
