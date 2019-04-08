@@ -2,16 +2,27 @@
 #### Proof of Value Terraform Scripts to utilize Amazon Web Services (AWS) Security, Identity & Compliance Services to Support your AWS Account Security Posture. 
 These Terraform Scripts are made with using the Preview of AWS Security Hub in Mind. Security Hub collects Information from GuardDuty, Macie, Inspector as well as AWS Config. Security Hub (the Preview at least) comes with Center for Internet Security (CIS) Config Rules that follow best security practices for account-wide security posture. The Services that are turned on, as well as the inline CloudFormation Stack are all made to support these CIS Rules from Security Hub, and also go a good way towards general security hardening for your account. Services that are used are listed later in the Readme, this is also a work in progress and other features may be added such as Amazon Macie, AWS WAF, and Custom Lambda Functions / CloudWatch Events to further Support Security Posture on AWS.
 
+## Change Log (Started 8 MAR 2019)
+- 22 FEB 2019: Basic Reference .tf Files Uploaded for Security Hub, GuardDuty and Inspector
+- 6 MAR 2019: Released version 0.9 - Combined Files, Many Bugs
+- 7 APR 2019: Released version 1.0 - Major Refactor & Break-Fixes for IAM Roles, Incorrect Interpolation Syntax; Added Support for data.tf and variables.tf
+- 8 APR 2019: Update for version 1.0.1 - Added Support for Inspector Finding Remediation via Lambda/IAM Role/SNS; Refer to Readme for Manual Steps that must be Accomplished to use this Remediation Automation
+
 ## Getting Started
 
 ### Baseline Knowledge Required
-- Intermediate Level Understanding of Deploying AWS Resources with Terraform
+- Basic Level Understanding of navigating AWS Console, usage of SSH (or however you use Terraform) and Linux text editors (Vi, Vim, Nano, etc)
+- Basic Knowledge on Installing / Maintaing AWS Simple Systems Manager (SSM) and Amazon Inspector Agents on your Linux/Windows EC2 Instances
 - Basic Level Understanding of how AWS Security, Identity & Compliance Services Work with One Another
 - Basic Knowledge of Terraform Concepts & Commands Expertise (and Somewhere to Use it from)
 - Your own provider.tf file (https://www.terraform.io/docs/providers/aws/)
 - The Region You Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config Enabled!
 
 ### AWS Services Used
+- **Systems Manager** (https://aws.amazon.com/systems-manager/)
+    - Systems Manager simplifies resource and application management, shortens the time to detect and resolve operational problems, and makes it easy to operate and manage your infrastructure securely at scale.
+- **Lambda** (https://aws.amazon.com/lambda/)
+    - AWS Lambda automatically runs your code without requiring you to provision or manage servers. Just write the code and upload it to Lambda...it can be directly triggered by AWS services such as S3, DynamoDB, Kinesis, SNS, and CloudWatch...
 - **Config** (https://aws.amazon.com/config/)
     - A service that enables you to assess, audit, and evaluate the configurations of your AWS resources
 - **CloudWatch Logs** (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
@@ -37,16 +48,24 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 
 ### Prerequisites:
 **Below Steps are Done on a Fresh Install of Ubuntu 18.04LTS**
-1. Install Unzip
+**Refer to (https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) for Information on how to Install the SSM Agent on Non-Amazon Linux / Ubuntu Distros**
+1. Update Your System
+`sudo apt-get update && sudo apt-get upgrade -y`
+2. Download Latest Version of Inspector Agent (https://docs.aws.amazon.com/inspector/latest/userguide/inspector_installing-uninstalling-agents.html)
+`wget https://inspector-agent.amazonaws.com/linux/latest/install`
+3. Install Inspector Agent
+`sudo bash install`
+4. Install Unzip
 `sudo apt-get install unzip`
-2. Grab the Latest Version of Terraform (https://www.terraform.io/downloads.html)
+5. Grab the Latest Version of Terraform (https://www.terraform.io/downloads.html)
 `wget https://releases.hashicorp.com/terraform/0.11.13/terraform_0.11.13_linux_amd64.zip`
-3. Unzip Terraform Installation
+6. Unzip Terraform Installation
 `unzip terraform_0.11.13_linux_amd64.zip`
-4. Move to /local/bin - or you can add Terraform to your PATH
+7. Move to /local/bin - or you can add Terraform to your PATH
 `sudo mv terraform /usr/local/bin/`
-5. Ensure that Terraform is Installed Correctly
+8. Ensure that Terraform is Installed Correctly
 `terraform --version`
+9. Ensure your EC2 Instances have an Instance Profile that allows full access to SSM Attached to them (https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-configuring-access-role.html)
 
 ### Installing & Configuration
 1. Create & Navigate to a New Directory
@@ -57,8 +76,12 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 `nano provider.tf`
 4. Fill out the *variables.tf* file
 `nano variables.tf`
-
-#### NOTE variables.tf has a `list` within for US-EAST-1 and US-WEST-1 Regions for Amazon Inspector ARNs for the Rules Packages -- you will need to modify that whole list for regions outside of US-EAST-1/US-WEST-1 and note the correct variable within main.tf
+5. Ensure proper elements for your Region from Variables.tf are Referenced in Data.tf
+`nano data.tf`
+#### !! Notes on `Variables.tf` !!
+- There is a List Variable for Amazon Inspector ARNs for the Rules Packages within for US-EAST-1 and US-WEST-1 Regions (Ln 31&41 in Variables.tf), you will need to modify that whole list for regions outside of US-EAST-1/US-WEST-1 and modify the correct variable reference within `main.tf` (Ln 165 in Main.tf)
+- You will also need to modify `data.tf` to use the populated `InspectorRemediationSNSTopicPolicyData_*` Variable for your Region (Ln79 in Variables.tf) within the Resource Element: `data "aws_iam_policy_document" "Inspector_Remediation_SNS_Topic_Policy_Data"`
+- Ensure that the `PathToInspectorRemediationLambdaUpload` within `variables.tf` uses just the folder path, and does not refer to the ZIP File -- i.e. `default = "~/aws-cmds/"`
 
 ### Deploying
 1. Initialize your AWS Provider
@@ -72,6 +95,9 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 5. Navigate to AWS Config Console & Finish Setup
     - Ensure you use your Created Role & Not the Service Linked Role
     - Navigate to Settings and then click Save for additional resources to be added into IAM Role Policy
+6. Attach Remediation SNS Topic to your Inspector Assessment Target Group (Terraform does not yet support this)
+    - Navigate to Inspector > Assessment Templates > <Your Assessment Template> > Manage SNS Topics > Select Your Remediation SNS Topic
+    - Remove All Events *except* for `Findings Reported` & Save
 
 ### Out of Scope
 - Provider.tf
@@ -85,7 +111,6 @@ This Proof of Value is only a small step towards an excellent Security Posture f
 ### Modifications to Deployment
 - Add AWS-Managed / Custom Config Rules to your AWS Config Setup
 - Add Customer Providers into Security Hub / GuardDuty from Marketplace
-- Attach SNS Topic to your Inspector Assessment Target Group (Terraform does not yet support this)
 
 ### High-Level Reading
 - https://aws.amazon.com/architecture/well-architected/

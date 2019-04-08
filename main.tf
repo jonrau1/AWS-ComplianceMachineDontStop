@@ -123,6 +123,15 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
             ],
             "Resource": "*"
         },
+        "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey",
+                "kms:Encrypt",
+                "kms:Describe",
+                "kms:Get*"
+            ],
+            "Resource": "*"
+        },
         {
             "Sid": "Allow sns access",
             "Effect": "Allow",
@@ -162,8 +171,78 @@ resource "aws_inspector_assessment_template" "Inspector_Assessment_Template" {
   name       = "${var.InspectorAssessmentTemplateName}"
   target_arn = "${aws_inspector_assessment_target.Inspector_Assessment_Target_All.arn}"
   duration   = 3600
-
   rules_package_arns = "${var.InspectorAssessmentRulesPackages_USWest1}"
+}
+resource "aws_s3_bucket" "Lambda_Artifacts_S3_Bucket" {
+  bucket = "${var.LambdaArtifactBucketName}"
+  acl    = "private"
+  versioning {
+    enabled = true
+  }
+  logging {
+    target_bucket = "${aws_s3_bucket.Server_Access_Log_S3_Bucket.id}"
+  }
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm     = "AES256"
+      }
+    }
+  }
+}
+resource "aws_s3_bucket_object" "Inspector_Remediation_Lambda_Object_Upload" {
+  bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
+  key    = "${var.InspectorRemediationLambdaUploadPrefix}/lambda-auto-remediate.zip"
+  source = "${var.PathToInspectorRemediationLambdaUpload}/lambda-auto-remediate.zip"
+}
+resource "aws_lambda_function" "Lambda_Function_Inspector_Remediation" {
+  s3_bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
+  s3_key = "${aws_s3_bucket_object.Inspector_Remediation_Lambda_Object_Upload.id}"
+  function_name    = "${var.InspectorRemediationFunctionName}"
+  description      = "${var.InspectorRemediationFunctionDescription}"
+  role             = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.arn}"
+  handler          = "lambda-auto-remediate.lambda_handler"
+  runtime          = "python2.7"
+  memory_size      = "${var.InspectorRemediationFunctionMemory}"
+  timeout          = "${var.InspectorRemediationFunctionTimeout}"
+}
+resource "aws_iam_role" "Lambda_Function_Inspector_Remediation_IAMRole" {
+  name = "${var.LambdaFunctionInspectorRemediationRoleName}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_InspectorRO" {
+  role       = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AmazonInspectorReadOnlyAccess.arn}"
+}
+resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_SSMFullAccess" {
+  role       = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AmazonSSMFullAccess.arn}"
+}
+resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_BasicLambdaExec" {
+  role       = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AWSLambdaBasicExecutionRole.arn}"
+}
+resource "aws_sns_topic" "Inspector_Remediation_SNS_Topic" {
+  name = "${var.InspectorRemediationSNSTopicName}"
+  kms_master_key_id = "${aws_kms_key.SNS_Customer_CMK.id}"
+}
+resource "aws_sns_topic_policy" "Inspector_Remediation_SNS_Topic_Policy" {
+  arn = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
+  policy = "${data.aws_iam_policy_document.Inspector_Remediation_SNS_Topic_Policy_Data.json}"
 }
 resource "aws_config_configuration_recorder" "Config_Configuration_Recorder" {
   name     = "${var.ConfigurationRecorderName}"
