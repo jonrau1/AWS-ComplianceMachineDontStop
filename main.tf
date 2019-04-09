@@ -122,8 +122,28 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
                 "kms:CancelKeyDeletion"
             ],
             "Resource": "*"
+        {
+            "Sid": "Allow config access",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "${aws_iam_role.Config_IAM_Role.arn}"
+            },
+            "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey",
+                "kms:Encrypt",
+                "kms:Describe",
+                "kms:Get*"
+            ],
+            "Resource": "*"
         },
-        "Action": [
+        {
+            "Sid": "Allow inspector access",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "inspector.amazonaws.com"
+            },
+            "Action": [
                 "kms:Decrypt",
                 "kms:GenerateDataKey",
                 "kms:Encrypt",
