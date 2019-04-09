@@ -85,7 +85,7 @@ variable "InspectorRemediationSNSTopicPolicyData_USEAST2_Principal" {
 variable "InspectorRemediationSNSTopicPolicyData_USWEST1_Principal" {
   default = "arn:aws:iam::166987590008:root"
 }
-variable "InspectorRemediationSNSTopicPolicyData_USWEST1_Principal" {
+variable "InspectorRemediationSNSTopicPolicyData_USWEST2_Principal" {
   default = "arn:aws:iam::758058086616:root"
 }
 variable "ConfigurationRecorderName" {
