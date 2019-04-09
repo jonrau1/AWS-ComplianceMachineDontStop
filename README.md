@@ -6,8 +6,8 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - 22 FEB 2019: Basic Reference .tf Files Uploaded for Security Hub, GuardDuty and Inspector
 - 6 MAR 2019: Released version 0.9 - Combined Files, Many Bugs
 - 7 APR 2019: Released version 1.0 - Major Refactor & Break-Fixes for IAM Roles, Incorrect Interpolation Syntax; Added Support for data.tf and variables.tf
-- 8 APR 2019: Update for version 1.0.1 - Added Support for Inspector Finding Remediation via Lambda/IAM Role/SNS; Refer to Readme for Manual Steps that must be Accomplished to use this Remediation Automation
-- 9 APR 2019: Fixed Issue where Config could not access Encrypted SNS Topic & Refactored Policy to include AWS Managed Config Read-Only Role Policy. Added KMS Permissions to Lambdda Execution Role. Added Lambda, SNS, Config-specific IAM Entities to SNS Customer Manager CMK. Troubleshooting Security Hub CIS Compliance & Insights failing.
+- 8 APR 2019: Update for version 1.0.1 - Added Support for Inspector Finding Remediation via Lambda/IAM Role/SNS; Refer to Readme for Manual Steps that must be Accomplished to use this Remediation Automation. 
+- 9 APR 2019: Fixed Issue where Config could not access Encrypted SNS Topic & Refactored Policy to include AWS Managed Config Read-Only Role Policy. Added KMS Permissions to Lambdda Execution Role. Added Lambda, SNS, Config-specific IAM Entities to SNS Customer Manager CMK. Troubleshooting Security Hub CIS Compliance & Insights failing. Added template for Provider.TF w/ VAR for Access Key & Secret Key interpolated through a Sample Terraform.tfvars file
 
 ## Getting Started
 
@@ -16,7 +16,6 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - Basic Knowledge on Installing / Maintaing AWS Simple Systems Manager (SSM) and Amazon Inspector Agents on your Linux/Windows EC2 Instances
 - Basic Level Understanding of how AWS Security, Identity & Compliance Services Work with One Another
 - Basic Knowledge of Terraform Concepts & Commands Expertise (and Somewhere to Use it from)
-- Your own provider.tf file (https://www.terraform.io/docs/providers/aws/)
 - The Region You Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config Enabled!
 
 ### AWS Services Used
@@ -73,11 +72,13 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 `mkdir aws-cmds && cd aws-cmds`
 2. Clone this Repo
 `git clone https://github.com/jonrau1/AWS-ComplianceMachineDontStop.git`
-3. Create your Provider (see above for Link)
+3. Add your Region to the *provider.tf* 
 `nano provider.tf`
-4. Fill out the *variables.tf* file
+4. Enter your AWS Secret Key & AWS Access Key into *terraform.tfvars*
+`nano terraform.tfvars`
+5. Fill out the *variables.tf* file
 `nano variables.tf`
-5. Ensure proper elements for your Region from Variables.tf are Referenced in Data.tf
+6. Ensure proper elements for your Region from *variables.tf* are Referenced in *data.tf*
 `nano data.tf`
 #### !! Notes on `Variables.tf` !!
 - There is a List Variable for Amazon Inspector ARNs for the Rules Packages within for US-EAST-1 and US-WEST-1 Regions (Ln 31&41 in Variables.tf), you will need to modify that whole list for regions outside of US-EAST-1/US-WEST-1 and modify the correct variable reference within `main.tf` (Ln 165 in Main.tf)
@@ -101,9 +102,8 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - Remove All Events *except* for `Findings Reported` & Save
 
 ### Out of Scope
-- Provider.tf
-- Filling Out Variables.tf for you (mostly)
-- .tfvars
+- AWS WAF -- Work in Progress
+- Terraform S3 Backend -- Working through error from the latest version of AWS Provider for Terraform
 - Macie -- Terraform currently does not support Activating Macie, only subscribing Buckets to Scan to Macie
 
 ## Next Steps
