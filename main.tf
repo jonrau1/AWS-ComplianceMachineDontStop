@@ -122,6 +122,7 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
                 "kms:CancelKeyDeletion"
             ],
             "Resource": "*"
+        },
         {
             "Sid": "Allow config access",
             "Effect": "Allow",
@@ -138,6 +139,21 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
             "Resource": "*"
         },
         {
+            "Sid": "Allow lambda access",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.arn}"
+            },
+            "Action": [
+                "kms:Decrypt",
+                "kms:GenerateDataKey*",
+                "kms:Encrypt",
+                "kms:Describe",
+                "kms:Get*"
+            ],
+            "Resource": "*"
+        },
+        {
             "Sid": "Allow inspector access",
             "Effect": "Allow",
             "Principal": {
@@ -145,7 +161,7 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
             },
             "Action": [
                 "kms:Decrypt",
-                "kms:GenerateDataKey",
+                "kms:GenerateDataKey*",
                 "kms:Encrypt",
                 "kms:Describe",
                 "kms:Get*"
@@ -160,7 +176,9 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
             },
             "Action": [
                 "kms:Decrypt",
-                "kms:GenerateDataKey",
+                "kms:GenerateDataKey*",
+                "kms:Describe",
+                "kms:Get*",
                 "kms:Encrypt"
             ],
             "Resource": "*"
@@ -191,7 +209,8 @@ resource "aws_inspector_assessment_template" "Inspector_Assessment_Template" {
   name       = "${var.InspectorAssessmentTemplateName}"
   target_arn = "${aws_inspector_assessment_target.Inspector_Assessment_Target_All.arn}"
   duration   = 3600
-  rules_package_arns = "${var.InspectorAssessmentRulesPackages_USWest1}"
+
+  rules_package_arns = "${var.InspectorAssessmentRulesPackages_USEast1}"
 }
 resource "aws_s3_bucket" "Lambda_Artifacts_S3_Bucket" {
   bucket = "${var.LambdaArtifactBucketName}"
@@ -239,6 +258,28 @@ resource "aws_iam_role" "Lambda_Function_Inspector_Remediation_IAMRole" {
       },
       "Effect": "Allow",
       "Sid": ""
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_role_policy" "Lambda_Function_Inspector_Remediation_IAMRole_KMSPolicy" {
+  name = "${var.LambdaFunctionInspectorRemedationRole_KMSPolicyName}"
+  role = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.id}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "kms:Describe",
+        "kms:Get*",
+        "kms:GenerateDataKey*",
+        "kms:Decrypt",
+        "kms:Encrypt"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
     }
   ]
 }
@@ -321,6 +362,10 @@ resource "aws_iam_role" "Config_IAM_Role" {
 }
 POLICY
 }
+resource "aws_iam_role_policy_attachment" "Config_Role_Managed_Policy_Attachment" {
+  role = "${aws_iam_role.Config_IAM_Role.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AWSConfigRole.arn}"
+}
 resource "aws_iam_role_policy" "Config_Role_Policy" {
   name = "${var.ConfigIAMRolePolicyName}"
   role = "${aws_iam_role.Config_IAM_Role.id}"
@@ -344,124 +389,7 @@ resource "aws_iam_role_policy" "Config_Role_Policy" {
       ],
       "Effect": "Allow",
       "Resource": "${aws_sns_topic.Config_SNS_Topic.id}"
-    },
-    {
-      "Sid": "Stmt1554678147797",
-      "Action": [
-        "cloudtrail:DescribeTrails",
-                "cloudtrail:GetEventSelectors",
-                "ec2:Describe*",
-                "config:Put*",
-                "config:Get*",
-                "config:List*",
-                "config:Describe*",
-                "config:BatchGet*",
-                "cloudtrail:GetTrailStatus",
-                "cloudtrail:ListTags",
-                "iam:GenerateCredentialReport",
-                "iam:GetCredentialReport",
-                "iam:GetAccountAuthorizationDetails",
-                "iam:GetAccountPasswordPolicy",
-                "iam:GetAccountSummary",
-                "iam:GetGroup",
-                "iam:GetGroupPolicy",
-                "iam:GetPolicy",
-                "iam:GetPolicyVersion",
-                "iam:GetRole",
-                "iam:GetRolePolicy",
-                "iam:GetUser",
-                "iam:GetUserPolicy",
-                "iam:ListAttachedGroupPolicies",
-                "iam:ListAttachedRolePolicies",
-                "iam:ListAttachedUserPolicies",
-                "iam:ListEntitiesForPolicy",
-                "iam:ListGroupPolicies",
-                "iam:ListGroupsForUser",
-                "iam:ListInstanceProfilesForRole",
-                "iam:ListPolicyVersions",
-                "iam:ListRolePolicies",
-                "iam:ListUserPolicies",
-                "iam:ListVirtualMFADevices",
-                "elasticloadbalancing:DescribeLoadBalancers",
-                "elasticloadbalancing:DescribeLoadBalancerAttributes",
-                "elasticloadbalancing:DescribeLoadBalancerPolicies",
-                "elasticloadbalancing:DescribeTags",
-                "acm:DescribeCertificate",
-                "acm:ListCertificates",
-                "acm:ListTagsForCertificate",
-                "rds:DescribeDBInstances",
-                "rds:DescribeDBSecurityGroups",
-                "rds:DescribeDBSnapshotAttributes",
-                "rds:DescribeDBSnapshots",
-                "rds:DescribeDBSubnetGroups",
-                "rds:DescribeEventSubscriptions",
-                "rds:ListTagsForResource",
-                "rds:DescribeDBClusters",
-                "s3:GetAccelerateConfiguration",
-                "s3:GetBucketAcl",
-                "s3:GetBucketCORS",
-                "s3:GetBucketLocation",
-                "s3:GetBucketLogging",
-                "s3:GetBucketNotification",
-                "s3:GetBucketPolicy",
-                "s3:GetBucketRequestPayment",
-                "s3:GetBucketTagging",
-                "s3:GetBucketVersioning",
-                "s3:GetBucketWebsite",
-                "s3:GetLifecycleConfiguration",
-                "s3:GetReplicationConfiguration",
-                "s3:ListAllMyBuckets",
-                "s3:ListBucket",
-                "s3:GetEncryptionConfiguration",
-                "s3:GetBucketPublicAccessBlock",
-                "s3:GetAccountPublicAccessBlock",
-                "redshift:DescribeClusterParameterGroups",
-                "redshift:DescribeClusterParameters",
-                "redshift:DescribeClusterSecurityGroups",
-                "redshift:DescribeClusterSnapshots",
-                "redshift:DescribeClusterSubnetGroups",
-                "redshift:DescribeClusters",
-                "redshift:DescribeEventSubscriptions",
-                "redshift:DescribeLoggingStatus",
-                "dynamodb:DescribeLimits",
-                "dynamodb:DescribeTable",
-                "dynamodb:ListTables",
-                "dynamodb:ListTagsOfResource",
-                "cloudwatch:DescribeAlarms",
-                "application-autoscaling:DescribeScalableTargets",
-                "application-autoscaling:DescribeScalingPolicies",
-                "autoscaling:DescribeAutoScalingGroups",
-                "autoscaling:DescribeLaunchConfigurations",
-                "autoscaling:DescribeLifecycleHooks",
-                "autoscaling:DescribePolicies",
-                "autoscaling:DescribeScheduledActions",
-                "autoscaling:DescribeTags",
-                "lambda:GetFunction",
-                "lambda:GetPolicy",
-                "lambda:ListFunctions",
-                "lambda:GetAlias",
-                "lambda:ListAliases",
-                "waf-regional:GetWebACLForResource",
-                "waf-regional:GetWebACL",
-                "cloudfront:ListTagsForResource",
-                "guardduty:ListDetectors",
-                "guardduty:GetMasterAccount",
-                "guardduty:GetDetector",
-                "codepipeline:ListPipelines",
-                "codepipeline:GetPipeline",
-                "codepipeline:GetPipelineState",
-                "kms:ListKeys",
-                "kms:GetKeyRotationStatus",
-                "kms:DescribeKey",
-                "ssm:DescribeDocument",
-                "ssm:GetDocument",
-                "ssm:DescribeAutomationExecutions",
-                "ssm:GetAutomationExecution",
-                "shield:DescribeProtection"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
+    }   
   ]
 }
 POLICY

@@ -30,3 +30,6 @@ data "aws_iam_policy" "Data_Policy_AWSLambdaBasicExecutionRole" {
 data "aws_iam_policy" "Data_Policy_AmazonInspectorReadOnlyAccess" {
   arn = "arn:aws:iam::aws:policy/AmazonInspectorReadOnlyAccess"
 }
+data "aws_iam_policy" "Data_Policy_AWSConfigRole" {
+  arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
+}
