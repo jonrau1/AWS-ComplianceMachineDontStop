@@ -2,14 +2,6 @@
 #### Proof of Value Terraform Scripts to utilize Amazon Web Services (AWS) Security, Identity & Compliance Services to Support your AWS Account Security Posture. 
 These Terraform Scripts are made with using the Preview of AWS Security Hub in Mind. Security Hub collects Information from GuardDuty, Macie, Inspector as well as AWS Config. Security Hub (the Preview at least) comes with Center for Internet Security (CIS) Config Rules that follow best security practices for account-wide security posture. The Services that are turned on, as well as the inline CloudFormation Stack are all made to support these CIS Rules from Security Hub, and also go a good way towards general security hardening for your account. Services that are used are listed later in the Readme, this is also a work in progress and other features may be added such as Amazon Macie, AWS WAF, and Custom Lambda Functions / CloudWatch Events to further Support Security Posture on AWS.
 
-## Change Log
-- 22 FEB 2019: Basic Reference .tf Files Uploaded for Security Hub, GuardDuty and Inspector
-- 6 MAR 2019: Released version 0.9 - Combined Files, Many Bugs
-- 7 APR 2019: Released version 1.0 - Major Refactor & Break-Fixes for IAM Roles, Incorrect Interpolation Syntax; Added Support for data.tf and variables.tf
-- 8 APR 2019: Update for version 1.0.1 - Added Support for Inspector Finding Remediation via Lambda/IAM Role/SNS; Refer to Readme for Manual Steps that must be Accomplished to use this Remediation Automation. 
-- 9 APR 2019: Fixed Issue where Config could not access Encrypted SNS Topic & Refactored Policy to include AWS Managed Config Read-Only Role Policy. Added KMS Permissions to Lambdda Execution Role. Added Lambda, SNS, Config-specific IAM Entities to SNS Customer Manager CMK. Troubleshooting Security Hub CIS Compliance & Insights failing. Added template for Provider.TF w/ VAR for Access Key & Secret Key interpolated through a Sample Terraform.tfvars file
-- 15 APR 2019: Added Support for AWS WAF, placed files into their own sub-directory to be used as a Module, or deployed from within. Currently has an IP Set Blacklist based on the Author's own Threat Intelligence findings, as well as reccomendations for Match Sets from the Whitepaper "Use AWS WAF to Mitigate OWASP’s Top 10 Web Application Vulnerabilities" Whitepaper (link way below) for XSS, SQLi, and Size Constraint.
-
 ## Getting Started
 
 ### Baseline Knowledge Required
