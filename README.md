@@ -8,6 +8,7 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - 7 APR 2019: Released version 1.0 - Major Refactor & Break-Fixes for IAM Roles, Incorrect Interpolation Syntax; Added Support for data.tf and variables.tf
 - 8 APR 2019: Update for version 1.0.1 - Added Support for Inspector Finding Remediation via Lambda/IAM Role/SNS; Refer to Readme for Manual Steps that must be Accomplished to use this Remediation Automation. 
 - 9 APR 2019: Fixed Issue where Config could not access Encrypted SNS Topic & Refactored Policy to include AWS Managed Config Read-Only Role Policy. Added KMS Permissions to Lambdda Execution Role. Added Lambda, SNS, Config-specific IAM Entities to SNS Customer Manager CMK. Troubleshooting Security Hub CIS Compliance & Insights failing. Added template for Provider.TF w/ VAR for Access Key & Secret Key interpolated through a Sample Terraform.tfvars file
+- 15 APR 2019: Added Support for AWS WAF, placed files into their own sub-directory to be used as a Module, or deployed from within. Currently has an IP Set Blacklist based on the Author's own Threat Intelligence findings, as well as reccomendations for Match Sets from the Whitepaper "Use AWS WAF to Mitigate OWASP’s Top 10 Web Application Vulnerabilities" Whitepaper (link way below) for XSS, SQLi, and Size Constraint.
 
 ## Getting Started
 
@@ -19,6 +20,8 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - The Region You Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config Enabled!
 
 ### AWS Services Used
+- **AWS WAF** (https://aws.amazon.com/waf/)
+    - AWS WAF is a web application firewall that helps protect your web applications from common web exploits that could affect application availability, compromise security, or consume excessive resources. AWS WAF gives you control over which traffic to allow or block to your web applications by defining customizable web security rules.
 - **Systems Manager** (https://aws.amazon.com/systems-manager/)
     - Systems Manager simplifies resource and application management, shortens the time to detect and resolve operational problems, and makes it easy to operate and manage your infrastructure securely at scale.
 - **Lambda** (https://aws.amazon.com/lambda/)
@@ -80,6 +83,10 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 `nano variables.tf`
 6. Ensure proper elements for your Region from *variables.tf* are Referenced in *data.tf*
 `nano data.tf`
+7. (Only if Using WAF) navigate to WAF Sub-Directory
+`cd AWS WAF`
+8. (Only if Using WAF) repeat steps 3-5 & modify Rules & IPs based on reccomendations from https://d0.awsstatic.com/whitepapers/Security/aws-waf-owasp.pdf
+`nano waf.tf`
 #### !! Notes on `Variables.tf` !!
 - There is a List Variable for Amazon Inspector ARNs for the Rules Packages within for US-EAST-1 and US-WEST-1 Regions (Ln 31&41 in Variables.tf), you will need to modify that whole list for regions outside of US-EAST-1/US-WEST-1 and modify the correct variable reference within `main.tf` (Ln 165 in Main.tf)
 - You will also need to modify `data.tf` to use the populated `InspectorRemediationSNSTopicPolicyData_*` Variable for your Region (Ln79 in Variables.tf) within the Resource Element: `data "aws_iam_policy_document" "Inspector_Remediation_SNS_Topic_Policy_Data"`
@@ -102,16 +109,17 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - Remove All Events *except* for `Findings Reported` & Save
 
 ### Out of Scope
-- AWS WAF -- Work in Progress
-- Terraform S3 Backend -- Working through error from the latest version of AWS Provider for Terraform
 - Macie -- Terraform currently does not support Activating Macie, only subscribing Buckets to Scan to Macie
 
 ## Next Steps
-This Proof of Value is only a small step towards an excellent Security Posture for your AWS Accounts. A Multitude of other Security, Identity & Compliance solutions are available to complement the above deployed Services, such as WAF, Macie, SSO, Directory Services, ACM, Secrets Manager, Cognito and Firewall Manager. The proper privacy-by-design and security-by-design for Software Development, Application Lifecycle and Architecture must be also be followed to ensure a hardened state, which this PoV does not supply.
+This Proof of Value is only a small step towards an excellent Security Posture for your AWS Accounts. A Multitude of other Security, Identity & Compliance solutions are available to complement the above deployed Services, such as Macie, SSO, Directory Services, ACM, Secrets Manager, Cognito and Firewall Manager. The proper privacy-by-design and security-by-design for Software Development, Application Lifecycle and Architecture must be also be followed to ensure a hardened state, which this PoV does not supply.
 
 ### Modifications to Deployment
 - Add AWS-Managed / Custom Config Rules to your AWS Config Setup
 - Add Customer Providers into Security Hub / GuardDuty from Marketplace
+- Modify WAF IPSet Blacklist / Create WAF IPSet Whitelist
+- Add Additional WAF Match Sets (Conditions)
+- Apply WAF WACL to a CloudFront Distribution
 
 ### High-Level Reading
 - https://aws.amazon.com/architecture/well-architected/
