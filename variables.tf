@@ -1,7 +1,7 @@
 variable "aws_access_key" {}
 variable "aws_secret_key" {}
 variable "GuardDutyPublishingFrequency" {
-  default = "SIX_HOURS"
+  default = "FIFTEEN_MINUTES"
 }
 variable "CloudTrailCMKDescription" {
   default = ""

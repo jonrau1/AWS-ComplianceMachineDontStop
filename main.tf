@@ -139,36 +139,6 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
             "Resource": "*"
         },
         {
-            "Sid": "Allow lambda access",
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.arn}"
-            },
-            "Action": [
-                "kms:Decrypt",
-                "kms:GenerateDataKey*",
-                "kms:Encrypt",
-                "kms:Describe",
-                "kms:Get*"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "Allow inspector access",
-            "Effect": "Allow",
-            "Principal": {
-                "Service": "inspector.amazonaws.com"
-            },
-            "Action": [
-                "kms:Decrypt",
-                "kms:GenerateDataKey*",
-                "kms:Encrypt",
-                "kms:Describe",
-                "kms:Get*"
-            ],
-            "Resource": "*"
-        },
-        {
             "Sid": "Allow sns access",
             "Effect": "Allow",
             "Principal": {
@@ -263,28 +233,6 @@ resource "aws_iam_role" "Lambda_Function_Inspector_Remediation_IAMRole" {
 }
 EOF
 }
-resource "aws_iam_role_policy" "Lambda_Function_Inspector_Remediation_IAMRole_KMSPolicy" {
-  name = "${var.LambdaFunctionInspectorRemedationRole_KMSPolicyName}"
-  role = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.id}"
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "kms:Describe",
-        "kms:Get*",
-        "kms:GenerateDataKey*",
-        "kms:Decrypt",
-        "kms:Encrypt"
-      ],
-      "Effect": "Allow",
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-}
 resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_InspectorRO" {
   role       = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.name}"
   policy_arn = "${data.aws_iam_policy.Data_Policy_AmazonInspectorReadOnlyAccess.arn}"
@@ -299,7 +247,7 @@ resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_BasicLambda
 }
 resource "aws_sns_topic" "Inspector_Remediation_SNS_Topic" {
   name = "${var.InspectorRemediationSNSTopicName}"
-  kms_master_key_id = "${aws_kms_key.SNS_Customer_CMK.id}"
+  kms_master_key_id = "alias/aws/sns"
 }
 resource "aws_sns_topic_policy" "Inspector_Remediation_SNS_Topic_Policy" {
   arn = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
