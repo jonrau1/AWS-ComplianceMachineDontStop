@@ -247,7 +247,6 @@ resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_BasicLambda
 }
 resource "aws_sns_topic" "Inspector_Remediation_SNS_Topic" {
   name = "${var.InspectorRemediationSNSTopicName}"
-  kms_master_key_id = "alias/aws/sns"
 }
 resource "aws_sns_topic_policy" "Inspector_Remediation_SNS_Topic_Policy" {
   arn = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
