@@ -252,6 +252,18 @@ resource "aws_sns_topic_policy" "Inspector_Remediation_SNS_Topic_Policy" {
   arn = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
   policy = "${data.aws_iam_policy_document.Inspector_Remediation_SNS_Topic_Policy_Data.json}"
 }
+resource "aws_lambda_permission" "Inspector_Remediation_SNS_Lambda_Permission" {
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.Lambda_Function_Inspector_Remediation.function_name}"
+  principal     = "sns.amazonaws.com"
+  source_arn    = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
+}
+resource "aws_sns_topic_subscription" "Inspector_Remediation_SNS_Subscription" {
+  topic_arn = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
+  protocol  = "lambda"
+  endpoint  = "${aws_lambda_function.Lambda_Function_Inspector_Remediation.arn}"
+}
 resource "aws_config_configuration_recorder" "Config_Configuration_Recorder" {
   name     = "${var.ConfigurationRecorderName}"
   role_arn = "${aws_iam_role.Config_IAM_Role.arn}"
