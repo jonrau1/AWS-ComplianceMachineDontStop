@@ -26,6 +26,10 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - A service that enables you to assess, audit, and evaluate the configurations of your AWS resources
 - **CloudWatch Logs** (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
     - Used to monitor, store, and access your log files from Amazon Elastic Compute Cloud (Amazon EC2) instances, AWS CloudTrail, Route 53, and other sources
+- **CloudWatch Events** (https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/WhatIsCloudWatchEvents.html)
+    - Amazon CloudWatch Events delivers a near real-time stream of system events that describe changes in Amazon Web Services (AWS) resources. Using simple rules that you can quickly set up, you can match events and route them to one or more target functions or streams.
+- **CloudWatch Alarms** (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
+    - You can create a CloudWatch alarm that watches a single CloudWatch metric or the result of a math expression based on CloudWatch metrics. The alarm performs one or more actions based on the value of the metric or expression relative to a threshold over a number of time periods. The action can be an Amazon EC2 action, an Amazon EC2 Auto Scaling action, or a notification sent to an Amazon SNS topic.
 - **CloudTrail** (https://aws.amazon.com/cloudtrail/)
     - A service that enables governance, compliance, operational auditing, and risk auditing of your AWS account
 - **IAM** (https://aws.amazon.com/iam/)
@@ -103,6 +107,7 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 6. Attach Remediation SNS Topic to your Inspector Assessment Target Group (Terraform does not yet support this)
     - Navigate to Inspector > Assessment Templates > <Your Assessment Template> > Manage SNS Topics > Select Your Remediation SNS Topic
     - Remove All Events *except* for `Findings Reported` & Save
+7. Navigate to AWS Glue Console and Edit your Crawlers, go into the `Output` section > `Configuration Options` and check the box that says "Update all new and existing partitions with metadata from the table"
 
 ### Out of Scope
 - Macie -- Terraform currently does not support Activating Macie, only subscribing Buckets to Scan to Macie
@@ -110,14 +115,16 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 ## Next Steps
 This Proof of Value is only a small step towards an excellent Security Posture for your AWS Accounts. A Multitude of other Security, Identity & Compliance solutions are available to complement the above deployed Services, such as Macie, SSO, Directory Services, ACM, Secrets Manager, Cognito and Firewall Manager. The proper privacy-by-design and security-by-design for Software Development, Application Lifecycle and Architecture must be also be followed to ensure a hardened state, which this PoV does not supply.
 
-### Modifications to Deployment
+### Modifications to Deployment / Further Configuration
 - Add AWS-Managed / Custom Config Rules to your AWS Config Setup
 - Add Customer Providers into Security Hub / GuardDuty from Marketplace
 - Modify WAF IPSet Blacklist / Create WAF IPSet Whitelist
 - Add Additional WAF Match Sets (Conditions)
 - Apply WAF WACL to a CloudFront Distribution
-- Write Athena SQL Queries against AWS Glue Database created for AWS WAF Logs
-- Perform data visualizations of AWS WAF logs using QuickSight (refer to Solutions & Reference Architecture section)
+- Write Athena SQL Queries against AWS Glue Database created for AWS WAF Logs & GuardDuty Findings
+    - https://aws.amazon.com/blogs/security/how-to-visualize-amazon-guardduty-findings-serverless-edition/
+- Perform data visualizations of AWS WAF logs using QuickSight
+    - https://aws.amazon.com/blogs/security/enabling-serverless-security-analytics-using-aws-waf-full-logs/
 
 ### High-Level Reading
 - https://aws.amazon.com/architecture/well-architected/
