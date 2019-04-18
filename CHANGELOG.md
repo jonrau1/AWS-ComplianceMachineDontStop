@@ -8,3 +8,4 @@
 - 16 APR 2019: Removed SNS Encryption for Remediation SNS Topic for Inspector, Added 2 Terraform Resources to attach subscribe Lambda to SNS & Add SNS as an event source for Lambda function
 - 17 APR 2019: Added WAF Logging support via Kinesis Data Firehose
 - 18 APR 2019: Added AWS Glue Crawler & Associated IAM Policy / Roles to create visualizations against WAF Logs using Athena & QuickSight. Added more AWS Security Blog posts regarding visualizations into Readme
+- 19 APR 2019: Added serverless visualization capabilities for GuardDuty via Kinesis / Glue / Athena -- refer to Readme for information on manual setups

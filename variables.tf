@@ -4,7 +4,7 @@ variable "GuardDutyPublishingFrequency" {
   default = "FIFTEEN_MINUTES"
 }
 variable "CloudTrailCMKDescription" {
-  default = ""
+  default = "this key for cloudtrail"
 }
 variable "CloudTrailCMKDeletionWindow" {
   default = "30"
@@ -53,11 +53,25 @@ variable "InspectorAssessmentRulesPackages_USWest1" {
 variable "LambdaArtifactBucketName" {
   default = ""
 }
-variable "PathToInspectorRemediationLambdaUpload" {
-  default = ""
-  description = "Ensure you put only the PATH, without the file name"
+variable "LambdaUploadPrefix" {
+  default = "lambda"
 }
-variable "InspectorRemediationLambdaUploadPrefix" {
+variable "PathToLambdaUpload" {
+  default = "~/aws-cmds/functions/"
+}
+variable "GuardDutyLogParsingFunctionName" {
+  default = ""
+}
+variable "GuardDutyLogParsingFunctionDescription" {
+  default = ""
+}
+variable "GuardDutyLogParsingFunctionMemory" {
+  default = "128"
+}
+variable "GuardDutyLogParsingFunctionTimeout" {
+  default = "240"
+}
+variable "GuardDutyLogParsingFunctionRoleName" {
   default = ""
 }
 variable "InspectorRemediationFunctionName" {
@@ -67,10 +81,10 @@ variable "InspectorRemediationFunctionDescription" {
   default = ""
 }
 variable "InspectorRemediationFunctionMemory" {
-  default = ""
+  default = "640"
 }
 variable "InspectorRemediationFunctionTimeout" {
-  default = ""
+  default = "240"
 }
 variable "LambdaFunctionInspectorRemediationRoleName" {
   default = ""
@@ -145,5 +159,58 @@ variable "CMKAdminsIAMUserName" {
   default = ""
 }
 variable "CMKAdminIAMGroupMembershipName" {
+  default = ""
+}
+variable "GuardDutyFindingKDFDeliveryStream_BufferSize" {
+  default = "5"
+  description = "Buffer incoming data to the specified size in MB before delivering it to the destination The default value is 5"
+}
+variable "GuardDutyFindingKDFDeliveryStream_BufferInterval" {
+  default = "300"
+  description = "Buffer incoming data for the specified period of time in seconds before delivering it to the destination The default value is 300."
+}
+variable "GuardDutyFindingKinesisFirehoseStreamName" {
+  default = ""
+}
+variable "GuardDutyFindingsRawLogBucket" {
+  default = ""
+}
+variable "GuardDutyFindingKinesisFirehoseStreamRoleName" {
+  default = ""
+}
+variable "GuardDutyFindingKinesisFirehoseStreamPolicyName" {
+  default = ""
+}
+variable "GuardDutyFindingKinesisFirehoseStreamPolicyDescription" {
+  default = ""
+}
+variable "GuardDutyFindingCloudWatchEventRuleName" {
+  default = ""
+}
+variable "GuardDutyFindingCloudWatchEventRuleDescription" {
+  default = ""
+}
+variable "GuardDutyFindingCWEtoKDFRoleName" {
+  default = ""
+}
+variable "GuardDutyFindingCWEtoKDFRolePolicyName" {
+  default = ""
+}
+variable "GuardDutyFindingCWEtoKDFRolePolicyDescription" {
+  default = ""
+}
+variable "GuardDutyFindingsGlueDBName" {
+  default = ""
+}
+variable "GuardDutyFindingsCrawlerName" {
+  default = ""
+}
+variable "GuardDutyFindingsGlueCrawlerRoleName" {
+  default = ""
+}
+variable "GuardDutyFindingsGlueCrawlerRoleS3PolicyName" {
+  default = ""
+}
+variable "GuardDutyFindingsGlueCrawlerRoleS3PolicyDescription" {
   default = ""
 }

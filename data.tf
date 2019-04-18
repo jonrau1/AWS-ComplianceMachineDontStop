@@ -11,7 +11,7 @@ data "aws_iam_policy_document" "Inspector_Remediation_SNS_Topic_Policy_Data" {
 
     principals {
       type        = "AWS"
-      identifiers = ["${var.InspectorRemediationSNSTopicPolicyData_USWEST1_Principal}"]
+      identifiers = ["${var.InspectorRemediationSNSTopicPolicyData_USEAST1_Principal}"]
     }
 
     resources = [
@@ -32,4 +32,10 @@ data "aws_iam_policy" "Data_Policy_AmazonInspectorReadOnlyAccess" {
 }
 data "aws_iam_policy" "Data_Policy_AWSConfigRole" {
   arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
+}
+data "aws_iam_policy" "Data_Policy_AWSLambdaExecute" {
+  arn = "arn:aws:iam::aws:policy/AWSLambdaExecute"
+}
+data "aws_iam_policy" "Data_Policy_AWSGlueServiceRole" {
+  arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }

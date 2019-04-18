@@ -190,6 +190,7 @@ resource "aws_s3_bucket" "Lambda_Artifacts_S3_Bucket" {
   }
   logging {
     target_bucket = "${aws_s3_bucket.Server_Access_Log_S3_Bucket.id}"
+    target_prefix = "LambdaAccess/"
   }
   server_side_encryption_configuration {
     rule {
@@ -199,10 +200,55 @@ resource "aws_s3_bucket" "Lambda_Artifacts_S3_Bucket" {
     }
   }
 }
+resource "aws_s3_bucket_object" "GuardDuty_Log_Parsing_Lambda_Object_Upload" {
+  bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
+  key    = "${var.LambdaUploadPrefix}/gd-sorter.zip"
+  source = "${var.PathToLambdaUpload}/gd-sorter.zip"
+}
+resource "aws_lambda_function" "Lambda_Function_GuardDuty_Log_Parsing" {
+  s3_bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
+  s3_key = "${aws_s3_bucket_object.GuardDuty_Log_Parsing_Lambda_Object_Upload.id}"
+  function_name    = "${var.GuardDutyLogParsingFunctionName}"
+  description      = "${var.GuardDutyLogParsingFunctionDescription}"
+  role             = "${aws_iam_role.Lambda_Function_GuardDuty_Log_Parsing_IAMRole.arn}"
+  handler          = "gd-sorter.lambda_handler"
+  runtime          = "python3.6"
+  memory_size      = "${var.GuardDutyLogParsingFunctionMemory}"
+  timeout          = "${var.GuardDutyLogParsingFunctionTimeout}"
+}
+resource "aws_iam_role" "Lambda_Function_GuardDuty_Log_Parsing_IAMRole" {
+  name = "${var.GuardDutyLogParsingFunctionRoleName}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "GDLogParsing_Lambda_Attach_LambdaExecute" {
+  role       = "${aws_iam_role.Lambda_Function_GuardDuty_Log_Parsing_IAMRole.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AWSLambdaExecute.arn}"
+}
+resource "aws_lambda_permission" "allow_bucket" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = "${aws_lambda_function.Lambda_Function_GuardDuty_Log_Parsing.arn}"
+  principal     = "s3.amazonaws.com"
+  source_arn    = "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.arn}"
+}
 resource "aws_s3_bucket_object" "Inspector_Remediation_Lambda_Object_Upload" {
   bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
-  key    = "${var.InspectorRemediationLambdaUploadPrefix}/lambda-auto-remediate.zip"
-  source = "${var.PathToInspectorRemediationLambdaUpload}/lambda-auto-remediate.zip"
+  key    = "${var.LambdaUploadPrefix}/lambda-auto-remediate.zip"
+  source = "${var.PathToLambdaUpload}/lambda-auto-remediate.zip"
 }
 resource "aws_lambda_function" "Lambda_Function_Inspector_Remediation" {
   s3_bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
@@ -380,6 +426,7 @@ resource "aws_s3_bucket" "Config_Artifacts_S3_Bucket" {
 
   logging {
     target_bucket = "${aws_s3_bucket.Server_Access_Log_S3_Bucket.id}"
+    target_prefix = "configaccess/"
   }
 
   server_side_encryption_configuration {
@@ -469,6 +516,7 @@ resource "aws_s3_bucket" "CloudTrail_Logs_S3_Bucket" {
   }
   logging {
     target_bucket = "${aws_s3_bucket.Server_Access_Log_S3_Bucket.id}"
+    target_prefix = "cloudtrailaccess/"
   }
   server_side_encryption_configuration {
     rule {
@@ -1073,4 +1121,216 @@ resource "aws_iam_group_membership" "KMS_Key_Admin_IAM_Group_Membership" {
   users = ["${aws_iam_user.KMS_Key_Admin_IAM_User.name}"]
 
   group = "${aws_iam_group.KMS_Key_Admin_IAM_Group.name}"
+}
+resource "aws_kinesis_firehose_delivery_stream" "GuardDuty_Finding_KDF_Delivery_Stream" {
+  name        = "${var.GuardDutyFindingKinesisFirehoseStreamName}"
+  destination = "extended_s3"
+  extended_s3_configuration {
+    prefix = "raw/firehose/"
+    role_arn   = "${aws_iam_role.GuardDuty_Finding_KDF_Delivery_Stream_Role.arn}"
+    bucket_arn = "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.arn}"
+    buffer_size = "${var.GuardDutyFindingKDFDeliveryStream_BufferSize}"
+    buffer_interval = "${var.GuardDutyFindingKDFDeliveryStream_BufferInterval}"
+  }
+}
+resource "aws_s3_bucket" "GuardDuty_Finding_KDF_Logs_Bucket" {
+  bucket = "${var.GuardDutyFindingsRawLogBucket}"
+  acl    = "private"
+  versioning {
+    enabled = true
+  }
+  logging {
+    target_bucket = "${aws_s3_bucket.Server_Access_Log_S3_Bucket.id}"
+    target_prefix = "guarddutyfindingaccess/"
+  }
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm     = "AES256"
+      }
+    }
+  }
+}
+resource "aws_iam_role" "GuardDuty_Finding_KDF_Delivery_Stream_Role" {
+  name = "${var.GuardDutyFindingKinesisFirehoseStreamRoleName}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "firehose.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_policy" "GuardDuty_Finding_KDF_Delivery_Stream_Role_Policy" {
+  name        = "${var.GuardDutyFindingKinesisFirehoseStreamPolicyName}"
+  path        = "/"
+  description = "${var.GuardDutyFindingKinesisFirehoseStreamPolicyDescription}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1555544710122",
+      "Action": [
+        "s3:AbortMultipartUpload",        
+        "s3:GetBucketLocation",        
+        "s3:GetObject",        
+        "s3:ListBucket",        
+        "s3:ListBucketMultipartUploads",        
+        "s3:PutObject"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.arn}",
+        "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.arn}/*"
+      ]
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "GuardDuty_Finding_Stream_Role_Attachment" {
+  role       = "${aws_iam_role.GuardDuty_Finding_KDF_Delivery_Stream_Role.name}"
+  policy_arn = "${aws_iam_policy.GuardDuty_Finding_KDF_Delivery_Stream_Role_Policy.arn}"
+}
+resource "aws_cloudwatch_event_rule" "GuardDuty_Finding_CloudWatch_Event_Rule" {
+  name        = "${var.GuardDutyFindingCloudWatchEventRuleName}"
+  description = "${var.GuardDutyFindingCloudWatchEventRuleDescription}"
+  event_pattern = <<PATTERN
+{
+  "source": [
+    "aws.guardduty"
+  ],
+  "detail-type": [
+    "GuardDuty Finding"
+  ]
+}
+PATTERN
+}
+resource "aws_iam_role" "GuardDuty_Finding_CWEtoKDF_Role" {
+  name = "${var.GuardDutyFindingCWEtoKDFRoleName}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "events.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_policy" "GuardDuty_Finding_CWEtoKDF_Role_Policy" {
+  name        = "${var.GuardDutyFindingCWEtoKDFRolePolicyName}"
+  path        = "/"
+  description = "${var.GuardDutyFindingCWEtoKDFRolePolicyDescription}"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "firehose:PutRecord",
+                "firehose:PutRecordBatch"
+            ],
+            "Resource": [
+                "${aws_kinesis_firehose_delivery_stream.GuardDuty_Finding_KDF_Delivery_Stream.arn}"
+            ]
+        }
+    ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "GuardDuty_Finding_CWEtoKDF_Policy_Attachment" {
+  role       = "${aws_iam_role.GuardDuty_Finding_CWEtoKDF_Role.name}"
+  policy_arn = "${aws_iam_policy.GuardDuty_Finding_CWEtoKDF_Role_Policy.arn}"
+}
+resource "aws_cloudwatch_event_target" "GuardDuty_Finding_CloudWatch_Event_KDF_Target" {
+  rule      = "${aws_cloudwatch_event_rule.GuardDuty_Finding_CloudWatch_Event_Rule.name}"
+  arn       = "${aws_kinesis_firehose_delivery_stream.GuardDuty_Finding_KDF_Delivery_Stream.arn}"
+  role_arn  = "${aws_iam_role.GuardDuty_Finding_CWEtoKDF_Role.arn}"
+}
+resource "aws_s3_bucket_notification" "GuardDuty_Finding_KDF_LogBucket_Object_Event" {
+  bucket = "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.id}"
+  lambda_function {
+    lambda_function_arn = "${aws_lambda_function.Lambda_Function_GuardDuty_Log_Parsing.arn}"
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "raw/firehose/"
+  }
+}
+resource "aws_glue_catalog_database" "GuardDuty_Findings_Parsed_DataCatalogDB" {
+  name = "${var.GuardDutyFindingsGlueDBName}"
+}
+resource "aws_glue_crawler" "GuardDuty_Findings_Parsed_Glue_Crawler" {
+  name = "${var.GuardDutyFindingsCrawlerName}"
+  database_name = "${aws_glue_catalog_database.GuardDuty_Findings_Parsed_DataCatalogDB.name}"
+  role = "${aws_iam_role.GuardDuty_Findings_Parsed_Glue_Crawler_Role.arn}"
+  schedule = "cron(0/15 * * * ? *)"
+  schema_change_policy {
+      update_behavior = "UPDATE_IN_DATABASE"
+  }
+  s3_target {
+    path = "s3://${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.bucket}/raw/by_finding_type/"
+  }
+}
+resource "aws_iam_role" "GuardDuty_Findings_Parsed_Glue_Crawler_Role" {
+  name = "${var.GuardDutyFindingsGlueCrawlerRoleName}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "glue.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_policy" "GuardDuty_Findings_Parsed_Glue_Crawler_Role_S3Policy" {
+  name        = "${var.GuardDutyFindingsGlueCrawlerRoleS3PolicyName}"
+  path        = "/"
+  description = "${var.GuardDutyFindingsGlueCrawlerRoleS3PolicyDescription}"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.arn}/*"
+            ]
+        }
+    ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "GuardDuty_Findings_Parsed_Glue_Crawler_Role_ServicePolicy_Attachment" {
+  role       = "${aws_iam_role.GuardDuty_Findings_Parsed_Glue_Crawler_Role.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AWSGlueServiceRole.arn}"
+}
+resource "aws_iam_role_policy_attachment" "GuardDuty_Findings_Parsed_Glue_Crawler_Role_S3Policy_Attachment" {
+  role       = "${aws_iam_role.GuardDuty_Findings_Parsed_Glue_Crawler_Role.name}"
+  policy_arn = "${aws_iam_policy.GuardDuty_Findings_Parsed_Glue_Crawler_Role_S3Policy.arn}"
 }
