@@ -72,3 +72,19 @@ variable "GlobalWAFWebACLMetricName" {
   default = ""
   description = "name of the CloudWatch Metric for the Web ACL can be the same as Rule Name"
 }
+variable "WAFLogsKinesisFirehoseStreamNamePrefix" {
+  default = ""
+  description = "Value that will append the KDF Stream name must begin with aws-waf-logs-"
+}
+variable "WAFLogsS3BucketName" {
+  default = ""
+}
+variable "WAFLogsKinesisFirehoseStreamRoleName" {
+  default = ""
+}
+variable "WAFLogsKinesisFirehoseStreamRolePolicyName" {
+  default = ""
+}
+variable "WAFLogsKinesisFirehoseStreamRolePolicyDescription" {
+  default = "This allows Kinesis for WAF Logs to put logs into S3"
+}

@@ -37,6 +37,9 @@ resource "aws_waf_rule" "Global_WAF_Rule_SizeConstraint_MatchSet" {
 resource "aws_waf_web_acl" "Global_WAF_Blacklist_WACL" {
   name        = "${var.GlobalWAFWebACLName}"
   metric_name = "${var.GlobalWAFWebACLMetricName}"
+  logging_configuration {
+    log_destination = "${aws_kinesis_firehose_delivery_stream.Global_WAF_KDF_Delivery_Stream.arn}"
+  }
   default_action {
     type = "ALLOW"
   }
@@ -72,4 +75,76 @@ resource "aws_waf_web_acl" "Global_WAF_Blacklist_WACL" {
     rule_id  = "${aws_waf_rule.Global_WAF_Rule_SizeConstraint_MatchSet.id}"
     type     = "REGULAR"
   }
+}
+resource "aws_kinesis_firehose_delivery_stream" "Global_WAF_KDF_Delivery_Stream" {
+  name        = "aws-waf-logs-${var.WAFLogsKinesisFirehoseStreamNamePrefix}"
+  destination = "extended_s3"
+  extended_s3_configuration {
+    role_arn   = "${aws_iam_role.Global_WAF_KDF_Delivery_Stream_Role.arn}"
+    bucket_arn = "${aws_s3_bucket.Global_WAF_Logs_Bucket.arn}"
+  }
+}
+resource "aws_s3_bucket" "Global_WAF_Logs_Bucket" {
+  bucket = "${var.WAFLogsS3BucketName}"
+  acl    = "private"
+  versioning {
+    enabled = true
+  }
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm     = "AES256"
+      }
+    }
+  }
+}
+resource "aws_iam_role" "Global_WAF_KDF_Delivery_Stream_Role" {
+  name = "${var.WAFLogsKinesisFirehoseStreamRoleName}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "firehose.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_policy" "Global_WAF_KDF_DeliverToS3_Policy" {
+  name        = "${var.WAFLogsKinesisFirehoseStreamRolePolicyName}"
+  path        = "/"
+  description = "${var.WAFLogsKinesisFirehoseStreamRolePolicyDescription}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1555544710122",
+      "Action": [
+        "s3:AbortMultipartUpload",        
+        "s3:GetBucketLocation",        
+        "s3:GetObject",        
+        "s3:ListBucket",        
+        "s3:ListBucketMultipartUploads",        
+        "s3:PutObject"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "${aws_s3_bucket.Global_WAF_Logs_Bucket.arn}",
+        "${aws_s3_bucket.Global_WAF_Logs_Bucket.arn}/*"
+      ]
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "Global_WAF_KDF_DeliverToS3_Policy_Attachment" {
+  role       = "${aws_iam_role.Global_WAF_KDF_Delivery_Stream_Role.name}"
+  policy_arn = "${aws_iam_policy.Global_WAF_KDF_DeliverToS3_Policy.arn}"
 }
