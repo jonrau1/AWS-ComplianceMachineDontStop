@@ -1,6 +1,6 @@
 # AWS Compliance Machine Don't Stop!
 #### Proof of Value Terraform Scripts to utilize Amazon Web Services (AWS) Security, Identity & Compliance Services to Support your AWS Account Security Posture. 
-These Terraform Scripts are made with using the Preview of AWS Security Hub in Mind. Security Hub collects Information from GuardDuty, Macie, Inspector as well as AWS Config. Security Hub (the Preview at least) comes with Center for Internet Security (CIS) Config Rules that follow best security practices for account-wide security posture. The Services that are turned on, as well as the inline CloudFormation Stack are all made to support these CIS Rules from Security Hub, and also go a good way towards general security hardening for your account. Services that are used are listed later in the Readme, this is also a work in progress and other features may be added such as Amazon Macie, AWS WAF, and Custom Lambda Functions / CloudWatch Events to further Support Security Posture on AWS.
+These Terraform Scripts are made with using the Preview of AWS Security Hub in Mind. Security Hub collects Information from GuardDuty, Macie, Inspector as well as AWS Config. Security Hub (the Preview at least) comes with Center for Internet Security (CIS) Config Rules that follow best security practices for account-wide security posture. The Services that are turned on, as well as the inline CloudFormation Stack are all made to support these CIS Rules from Security Hub, and also go a good way towards general security hardening for your account. Visualization & Alerting support have also been added (please refer to ReadMe & Changelog) via Kinesis and Glue to perform crawling & ETL of logs from AWS WAF. Services that are used are listed later in the Readme, this is also a work in progress and other features may be added such as Amazon Macie, and Custom Lambda Functions / CloudWatch Events to further Support Security Posture on AWS.
 
 ## Getting Started
 
@@ -12,7 +12,11 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - The Region You Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config Enabled!
 
 ### AWS Services Used
-- **AWS WAF** (https://aws.amazon.com/waf/)
+- **Glue** (https://aws.amazon.com/glue/)
+    - AWS Glue is a fully managed extract, transform, and load (ETL) service that makes it easy for customers to prepare and load their data for analytics.
+- **Kinesis Data Firehose** (https://aws.amazon.com/kinesis/data-firehose/)
+    - Amazon Kinesis Data Firehose is the easiest way to reliably load streaming data into data stores and analytics tools. It can capture, transform, and load streaming data into Amazon S3, Amazon Redshift, Amazon Elasticsearch Service, and Splunk, enabling near real-time analytics with existing business intelligence tools and dashboards you’re already using today.
+- **WAF** (https://aws.amazon.com/waf/)
     - AWS WAF is a web application firewall that helps protect your web applications from common web exploits that could affect application availability, compromise security, or consume excessive resources. AWS WAF gives you control over which traffic to allow or block to your web applications by defining customizable web security rules.
 - **Systems Manager** (https://aws.amazon.com/systems-manager/)
     - Systems Manager simplifies resource and application management, shortens the time to detect and resolve operational problems, and makes it easy to operate and manage your infrastructure securely at scale.
@@ -112,6 +116,8 @@ This Proof of Value is only a small step towards an excellent Security Posture f
 - Modify WAF IPSet Blacklist / Create WAF IPSet Whitelist
 - Add Additional WAF Match Sets (Conditions)
 - Apply WAF WACL to a CloudFront Distribution
+- Write Athena SQL Queries against AWS Glue Database created for AWS WAF Logs
+- Perform data visualizations of AWS WAF logs using QuickSight (refer to Solutions & Reference Architecture section)
 
 ### High-Level Reading
 - https://aws.amazon.com/architecture/well-architected/
@@ -134,6 +140,8 @@ This Proof of Value is only a small step towards an excellent Security Posture f
 - https://aws.amazon.com/blogs/security/new-whitepaper-achieving-operational-resilience-in-the-financial-sector-and-beyond/
 
 ### AWS Security Solutions & Reference Architecture
+- https://aws.amazon.com/blogs/security/enabling-serverless-security-analytics-using-aws-waf-full-logs/
+- https://aws.amazon.com/blogs/security/trimming-aws-waf-logs-with-amazon-kinesis-firehose-transformations/
 - https://aws.amazon.com/blogs/security/how-to-visualize-amazon-guardduty-findings-serverless-edition/
 - https://aws.amazon.com/blogs/security/how-to-visualize-and-refine-your-networks-security-by-adding-security-group-ids-to-your-vpc-flow-logs/
 - https://aws.amazon.com/blogs/security/how-to-use-amazon-guardduty-and-aws-web-application-firewall-to-automatically-block-suspicious-hosts/

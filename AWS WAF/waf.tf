@@ -148,3 +148,67 @@ resource "aws_iam_role_policy_attachment" "Global_WAF_KDF_DeliverToS3_Policy_Att
   role       = "${aws_iam_role.Global_WAF_KDF_Delivery_Stream_Role.name}"
   policy_arn = "${aws_iam_policy.Global_WAF_KDF_DeliverToS3_Policy.arn}"
 }
+resource "aws_glue_catalog_database" "Global_WAF_Visualization_Glue_CatalogDB" {
+  name = "${var.WAFVisualizationGlueDBName}"
+}
+resource "aws_glue_crawler" "Global_WAF_Visualization_Glue_Crawler" {
+  name = "${var.WAFVisualizationGlueCrawlerName}"
+  database_name = "${aws_glue_catalog_database.Global_WAF_Visualization_Glue_CatalogDB.name}"
+  table_prefix = "${var.WAFVisualizationGlueTablePrefixName}"
+  role = "${aws_iam_role.Global_WAF_Visualization_Glue_Crawler_Role.arn}"
+  schedule = "cron(0/15 * * * ? *)"
+  schema_change_policy {
+      update_behavior = "UPDATE_IN_DATABASE"
+  }
+  s3_target {
+    path = "s3://${aws_s3_bucket.Global_WAF_Logs_Bucket.bucket}"
+  }
+}
+resource "aws_iam_role" "Global_WAF_Visualization_Glue_Crawler_Role" {
+  name = "${var.WAFVisualizationGlueCrawlerRoleName}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "glue.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+resource "aws_iam_policy" "Global_WAF_Visualization_Glue_Crawler_Role_S3Policy" {
+  name        = "${var.WAFVisualizationGlueCrawlerRoleS3PolicyName}"
+  path        = "/"
+  description = "${var.WAFVisualizationGlueCrawlerRoleS3PolicyDescription}"
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "${aws_s3_bucket.Global_WAF_Logs_Bucket.arn}*"
+            ]
+        }
+    ]
+}
+EOF
+}
+resource "aws_iam_role_policy_attachment" "Global_WAF_Vis_Glue_Crawler_Role_ServicePolicy_Attachment" {
+  role       = "${aws_iam_role.Global_WAF_Visualization_Glue_Crawler_Role.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AWSGlueRole.arn}"
+}
+resource "aws_iam_role_policy_attachment" "Global_WAF_Vis_Glue_Crawler_Role_S3Policy_Attachment" {
+  role       = "${aws_iam_role.Global_WAF_Visualization_Glue_Crawler_Role.name}"
+  policy_arn = "${aws_iam_policy.Global_WAF_Visualization_Glue_Crawler_Role_S3Policy.arn}"
+}

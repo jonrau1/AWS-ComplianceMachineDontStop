@@ -88,3 +88,23 @@ variable "WAFLogsKinesisFirehoseStreamRolePolicyName" {
 variable "WAFLogsKinesisFirehoseStreamRolePolicyDescription" {
   default = "This allows Kinesis for WAF Logs to put logs into S3"
 }
+variable "WAFVisualizationGlueDBName" {
+  default = ""
+  description = "Name of the Glue Data Catalog DB to dump crawler findings into"
+}
+variable "WAFVisualizationGlueCrawlerName" {
+  default = ""
+}
+variable "WAFVisualizationGlueTablePrefixName" {
+  default = "" 
+  description = "The table prefix used for catalog tables that are created"
+}
+variable "WAFVisualizationGlueCrawlerRoleName" {
+  default = ""
+}
+variable "WAFVisualizationGlueCrawlerRoleS3PolicyName" {
+  default = ""
+}
+variable "WAFVisualizationGlueCrawlerRoleS3PolicyDescription" {
+  default = ""
+}
