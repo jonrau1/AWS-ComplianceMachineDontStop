@@ -145,6 +145,15 @@ variable "CloudTrailLogS3BucketName" {
 }
 variable "SecurityHubCISComplianceAlarmsCFNStackName" {
   default = ""
+  description = "name of the CloudFormation Stack for the CIS-Aligned Alarms"
+}
+variable "SecurityHubCloudTrailAlarmsCFNStackName" {
+  default = ""
+  description = "name of the CloudFormation Stack for the email subscribed CloudTrail alarms"
+}
+variable "SecurityHubAlerts_EmailAddress" {
+  default = ""
+  description = "can be an indivdual or distro list"
 }
 variable "CMKAdminsIAMGroupName" {
   default = ""
