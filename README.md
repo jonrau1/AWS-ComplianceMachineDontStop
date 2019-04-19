@@ -12,6 +12,12 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 - The Region You Deploy this PoV to **Must Not Have** GuardDuty, Security Hub, or Config Enabled!
 
 ### AWS Services Used
+- **GuardDuty** (https://aws.amazon.com/guardduty/)
+    - A threat detection service that continuously monitors for malicious activity and unauthorized behavior to protect your AWS accounts and workloads
+- **KMS** (https://aws.amazon.com/kms/)
+    - KMS makes it easy for you to create and manage keys and control the use of encryption across a wide range of AWS services and in your applications. AWS KMS is a secure and resilient service that uses FIPS 140-2 validated hardware security modules to protect your keys
+- **Security Hub** (https://aws.amazon.com/security-hub/)
+    - Security Hub gives you a comprehensive view of your high-priority security alerts and compliance status across AWS accounts
 - **Glue** (https://aws.amazon.com/glue/)
     - AWS Glue is a fully managed extract, transform, and load (ETL) service that makes it easy for customers to prepare and load their data for analytics.
 - **Kinesis Data Firehose** (https://aws.amazon.com/kinesis/data-firehose/)
@@ -32,6 +38,10 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - You can create a CloudWatch alarm that watches a single CloudWatch metric or the result of a math expression based on CloudWatch metrics. The alarm performs one or more actions based on the value of the metric or expression relative to a threshold over a number of time periods. The action can be an Amazon EC2 action, an Amazon EC2 Auto Scaling action, or a notification sent to an Amazon SNS topic.
 - **CloudTrail** (https://aws.amazon.com/cloudtrail/)
     - A service that enables governance, compliance, operational auditing, and risk auditing of your AWS account
+- **VPC** (https://aws.amazon.com/vpc/)
+    - Amazon Virtual Private Cloud (Amazon VPC) lets you provision a logically isolated section of the AWS Cloud where you can launch AWS resources in a virtual network that you define. You have complete control over your virtual networking environment, including selection of your own IP address range, creation of subnets, and configuration of route tables and network gateways. You can use both IPv4 and IPv6 in your VPC for secure and easy access to resources and applications.
+- **PrivateLink** (https://aws.amazon.com/privatelink/)
+    - AWS PrivateLink simplifies the security of data shared with cloud-based applications by eliminating the exposure of data to the public Internet. AWS PrivateLink provides private connectivity between VPCs, AWS services, and on-premises applications, securely on the Amazon network. AWS PrivateLink makes it easy to connect services across different accounts and VPCs to significantly simplify the network architecture.
 - **IAM** (https://aws.amazon.com/iam/)
     - Enables you to manage access to AWS services and resources securely
 - **Inspector** (https://aws.amazon.com/inspector/)
@@ -40,14 +50,8 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - A highly available, durable, secure, fully managed pub/sub messaging service that enables you to decouple microservices, distributed systems, and serverless applications
 - **S3** (https://aws.amazon.com/s3/)
     - An object storage service that offers industry-leading scalability, data availability, security, and performance. This means customers of all sizes and industries can use it to store and protect any amount of data for a range of use cases, such as websites, mobile applications, backup and restore, archive, enterprise applications, IoT devices, and big data analytics
-- **KMS** (https://aws.amazon.com/kms/)
-    - KMS makes it easy for you to create and manage keys and control the use of encryption across a wide range of AWS services and in your applications. AWS KMS is a secure and resilient service that uses FIPS 140-2 validated hardware security modules to protect your keys
-- **Security Hub** (https://aws.amazon.com/security-hub/)
-    - Security Hub gives you a comprehensive view of your high-priority security alerts and compliance status across AWS accounts
 - **CloudFormation** (https://aws.amazon.com/cloudformation/)
     - CloudFormation provides a common language for you to describe and provision all the infrastructure resources in your cloud environment. CloudFormation allows you to use a simple text file to model and provision, in an automated and secure manner, all the resources needed for your applications across all regions and accounts
-- **GuardDuty** (https://aws.amazon.com/guardduty/)
-    - A threat detection service that continuously monitors for malicious activity and unauthorized behavior to protect your AWS accounts and workloads
 
 ### Prerequisites:
 **Below Steps are Done on a Fresh Install of Ubuntu 18.04LTS**
@@ -87,10 +91,12 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 `cd AWS WAF`
 8. (Only if Using WAF) repeat steps 3-5 & modify Rules & IPs based on reccomendations from https://d0.awsstatic.com/whitepapers/Security/aws-waf-owasp.pdf
 `nano waf.tf`
+9. (Only if using VPC Module) fill out Variables -- make sure to specify Region as it is used by VPC Endpoints (PrivateLink)
+`cd VPC Module` && `nano variables.tf`
 #### !! Notes on `Variables.tf` !!
-- There is a List Variable for Amazon Inspector ARNs for the Rules Packages within for US-EAST-1 and US-WEST-1 Regions (Ln 31&41 in Variables.tf), you will need to modify that whole list for regions outside of US-EAST-1/US-WEST-1 and modify the correct variable reference within `main.tf` (Ln 165 in Main.tf)
-- You will also need to modify `data.tf` to use the populated `InspectorRemediationSNSTopicPolicyData_*` Variable for your Region (Ln79 in Variables.tf) within the Resource Element: `data "aws_iam_policy_document" "Inspector_Remediation_SNS_Topic_Policy_Data"`
-- Ensure that the `PathToInspectorRemediationLambdaUpload` within `variables.tf` uses just the folder path, and does not refer to the ZIP File -- i.e. `default = "~/aws-cmds/"`
+- There is a List Variable for Amazon Inspector ARNs for the Rules Packages within for US-EAST-1 and US-WEST-1 Regions, you will need to modify that whole list for regions outside of US-EAST-1/US-WEST-1 and modify the correct variable reference within `main.tf`
+- You will also need to modify `data.tf` to use the populated `InspectorRemediationSNSTopicPolicyData_*` Variable for your Region within the Resource Element: `data "aws_iam_policy_document" "Inspector_Remediation_SNS_Topic_Policy_Data"`
+- Ensure that the `PathToInspectorRemediationLambdaUpload` within `variables.tf` uses just the folder path, and does not refer to the ZIP File -- i.e. `default = "~/aws-cmds/functions/"`
 
 ### Deploying
 1. Initialize your AWS Provider
