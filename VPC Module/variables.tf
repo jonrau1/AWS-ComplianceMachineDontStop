@@ -21,6 +21,7 @@ variable "PrimaryVPCDNSHostnames" {
 }
 variable "PrimaryVPCTagName" {
   default = ""
+  description = "Name tag value of the VPC"
 }
 variable "PubSnet1CIDRBlock" {
   default = ""
