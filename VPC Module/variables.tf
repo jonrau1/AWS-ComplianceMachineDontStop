@@ -53,6 +53,7 @@ variable "PrimaryVPCIGWNameTag" {
 }
 variable "PublicRTBNameTag" {
   default = ""
+  description = "Tag Value for Name of the Public Internet-facing Route Table"
 }
 variable "PrimaryVPCNatGWEIPNameTag" {
   default = ""
@@ -60,9 +61,11 @@ variable "PrimaryVPCNatGWEIPNameTag" {
 }
 variable "PrimaryVPCNatGWNameTag" {
   default = ""
+  description = "Name tag for the NAT Gateway"
 }
 variable "PrivateRTBNameTag" {
   default = ""
+  description = "Tag Value for Name of the Private Subnet Route Table"
 }
 variable "PrincipalSecGroupName" {
   default = ""
