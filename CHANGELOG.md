@@ -16,3 +16,4 @@
     - Removed both CloudFormation Stacks for Security Hub Related Alerts & Consolidated Them into Proper Terraform Metric Filters & Alarms
     - Changed / Removed Variables related to SNS Topic that CIS Compliance alerts will go to
     - Updated ReadMe to reflect that you MUST have a subscriber in the SNS Topic for CIS to measure as compliant
+    - Added Support for Lambda Data Events (All Current & Future) to be logged via CloudTrail
