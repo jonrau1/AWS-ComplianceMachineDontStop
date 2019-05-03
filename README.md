@@ -50,8 +50,6 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - A highly available, durable, secure, fully managed pub/sub messaging service that enables you to decouple microservices, distributed systems, and serverless applications
 - **S3** (https://aws.amazon.com/s3/)
     - An object storage service that offers industry-leading scalability, data availability, security, and performance. This means customers of all sizes and industries can use it to store and protect any amount of data for a range of use cases, such as websites, mobile applications, backup and restore, archive, enterprise applications, IoT devices, and big data analytics
-- **CloudFormation** (https://aws.amazon.com/cloudformation/)
-    - CloudFormation provides a common language for you to describe and provision all the infrastructure resources in your cloud environment. CloudFormation allows you to use a simple text file to model and provision, in an automated and secure manner, all the resources needed for your applications across all regions and accounts
 
 ### Prerequisites:
 **Below Steps are Done on a Fresh Install of Ubuntu 18.04LTS**
@@ -114,6 +112,7 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - Navigate to Inspector > Assessment Templates > <Your Assessment Template> > Manage SNS Topics > Select Your Remediation SNS Topic
     - Remove All Events *except* for `Findings Reported` & Save
 7. Navigate to AWS Glue Console and Edit your Crawlers, go into the `Output` section > `Configuration Options` and check the box that says "Update all new and existing partitions with metadata from the table"
+8. Ensure you CIS Compliance SNS Topic has a Subscriber that is confirmed (Email, SMS, etc) to ensure CIS Compliance checks for Metrics & Alarms Pass
 
 ### Out of Scope
 - Macie -- Terraform currently does not support Activating Macie, only subscribing Buckets to Scan to Macie

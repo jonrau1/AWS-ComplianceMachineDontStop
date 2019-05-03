@@ -125,7 +125,7 @@ variable "ServerAccessLogS3BucketName" {
 variable "ConfigArtifactsBucketName" {
   default = ""
 }
-variable "CISComplianceCFNStackSNSTopicName" {
+variable "CISComplianceAlertsSNSTopicName" {
   default = ""
 }
 variable "CISComplianceCloudWatchLogsGroupName" {
@@ -143,17 +143,8 @@ variable "CISComplianceCloudTrailName" {
 variable "CloudTrailLogS3BucketName" {
   default = ""
 }
-variable "SecurityHubCISComplianceAlarmsCFNStackName" {
-  default = ""
-  description = "name of the CloudFormation Stack for the CIS-Aligned Alarms"
-}
-variable "SecurityHubCloudTrailAlarmsCFNStackName" {
-  default = ""
-  description = "name of the CloudFormation Stack for the email subscribed CloudTrail alarms"
-}
-variable "SecurityHubAlerts_EmailAddress" {
-  default = ""
-  description = "can be an indivdual or distro list"
+variable "CIS_Metric_Alarm_Namespace" {
+  default = "LogMetrics"
 }
 variable "CMKAdminsIAMGroupName" {
   default = ""

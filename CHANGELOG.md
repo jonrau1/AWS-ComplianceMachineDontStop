@@ -12,3 +12,7 @@
     - Added serverless visualization capabilities for GuardDuty via Kinesis / Glue / Athena -- refer to Readme for information on manual setups. 
     - Module / Sub-Directory added into Repo for VPC; uses a Private & Public design plus VPC Endpoints for private connectivity to S3, DynamoDB, and Systems Manager endpoints.
     - Additional CloudTrail Alarms for CIS Compliance for Security Hub added (sorry, it's another nested CFN Stack) but also uses SNS for Email
+- 2 MAY 2019:
+    - Removed both CloudFormation Stacks for Security Hub Related Alerts & Consolidated Them into Proper Terraform Metric Filters & Alarms
+    - Changed / Removed Variables related to SNS Topic that CIS Compliance alerts will go to
+    - Updated ReadMe to reflect that you MUST have a subscriber in the SNS Topic for CIS to measure as compliant
