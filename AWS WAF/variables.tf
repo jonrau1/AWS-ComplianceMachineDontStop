@@ -40,6 +40,14 @@ variable "GlobalWAFRuleIPSetBlacklistMetricName" {
   default = ""
   description = "name of the CloudWatch Metric for the Blacklist WAF Rule can be the same as Rule Name"
 }
+variable "GlobalWAF_BlacklistWebACLName" {
+  default = ""
+  description = "Name of the Web ACL for Blacklist IPs"
+}
+variable "GlobalWAF_BlacklistWebACLMetricName" {
+  default = ""
+  description = "name of the CloudWatch Metric for the Blacklist Web ACL can be the same as Rule Name"
+}
 variable "GlobalWAFRuleSQLiMatchSetName" {
   default = ""
   description = "name of the SQL Injection Match Set WAF Rule"
@@ -47,6 +55,14 @@ variable "GlobalWAFRuleSQLiMatchSetName" {
 variable "GlobalWAFRuleSQLiMatchSeMetricName" {
   default = ""
   description = "name of the CloudWatch Metric for the SQL Injection Match Set can be the same as Rule Name"
+}
+variable "GlobalWAF_SQLIWebACLName" {
+  default = ""
+  description = "Name of the Web ACL for SQL Injection Rules"
+}
+variable "GlobalWAF_SQLIWebACLMetricName" {
+  default = ""
+  description = "name of the CloudWatch Metric for the SQL Injection Rules Web ACL can be the same as Rule Name"
 }
 variable "GlobalWAFRuleXSSMatchSetName" {
   default = ""
@@ -56,6 +72,14 @@ variable "GlobalWAFRuleSXSSMatchSeMetricName" {
   default = ""
   description = "name of the CloudWatch Metric for the Cross-Site Scripting Match Set can be the same as Rule Name"
 }
+variable "GlobalWAF_XSSWebACLName" {
+  default = ""
+  description = "Name of the Web ACL for XSS Rules"
+}
+variable "GlobalWAF_XSSWebACLMetricName" {
+  default = ""
+  description = "name of the CloudWatch Metric for the XSS Web ACL can be the same as Rule Name"
+}
 variable "GlobalWAFRuleSizeConstraintMatchSetName" {
   default = ""
   description = "name of the Constraint Size Match Set WAF Rule"
@@ -64,13 +88,13 @@ variable "GlobalWAFRuleSConstraintSizeMatchSeMetricName" {
   default = ""
   description = "name of the CloudWatch Metric for the Constraint Size Match Set can be the same as Rule Name"
 }
-variable "GlobalWAFWebACLName" {
+variable "GlobalWAF_SizeConstraintWebACLName" {
   default = ""
-  description = "Name of the Web ACL aka WACL"
+  description = "Name of the Web ACL for Size Constraint Rules"
 }
-variable "GlobalWAFWebACLMetricName" {
+variable "GlobalWAF_SizeConstraintWebACLMetricName" {
   default = ""
-  description = "name of the CloudWatch Metric for the Web ACL can be the same as Rule Name"
+  description = "name of the CloudWatch Metric for the Size Constraint Web ACL can be the same as Rule Name"
 }
 variable "WAFLogsKinesisFirehoseStreamNamePrefix" {
   default = ""

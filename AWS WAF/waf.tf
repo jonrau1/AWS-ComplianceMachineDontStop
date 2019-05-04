@@ -7,36 +7,9 @@ resource "aws_waf_rule" "Global_WAF_Rule_IPSet_Blacklist" {
     type    = "IPMatch"
   }
 }
-resource "aws_waf_rule" "Global_WAF_SQLi_MatchSet" {
-  name        = "${var.GlobalWAFRuleSQLiMatchSetName}"
-  metric_name = "${var.GlobalWAFRuleSQLiMatchSeMetricName}"
-  predicates{
-    data_id = "${aws_waf_sql_injection_match_set.Global_WAF_SQLi_MatchSet.id}"
-    negated = false
-    type = "SqlInjectionMatch"
-  }
-}
-resource "aws_waf_rule" "Global_WAF_Rule_XSS_MatchSet" {
-  name        = "${var.GlobalWAFRuleXSSMatchSetName}"
-  metric_name = "${var.GlobalWAFRuleSXSSMatchSeMetricName}"
-  predicates {
-    data_id = "${aws_waf_xss_match_set.Global_WAF_XSS_MatchSet.id}"
-    negated = false
-    type = "XssMatch"
-  }
-}
-resource "aws_waf_rule" "Global_WAF_Rule_SizeConstraint_MatchSet" {
-  name        = "${var.GlobalWAFSizeConstraintMatchSetName}"
-  metric_name = "${var.GlobalWAFRuleSConstraintSizeMatchSeMetricName}"
-  predicates {
-    data_id = "${aws_waf_size_constraint_set.Global_WAF_SizeConstraint_MatchSet.id}"
-    negated = false
-    type = "SizeConstraint"
-  }
-}
 resource "aws_waf_web_acl" "Global_WAF_Blacklist_WACL" {
-  name        = "${var.GlobalWAFWebACLName}"
-  metric_name = "${var.GlobalWAFWebACLMetricName}"
+  name        = "${var.GlobalWAF_BlacklistWebACLName}"
+  metric_name = "${var.GlobalWAF_BlacklistWebACLMetricName}"
   logging_configuration {
     log_destination = "${aws_kinesis_firehose_delivery_stream.Global_WAF_KDF_Delivery_Stream.arn}"
   }
@@ -50,28 +23,84 @@ resource "aws_waf_web_acl" "Global_WAF_Blacklist_WACL" {
     priority = 1
     rule_id  = "${aws_waf_rule.Global_WAF_Rule_IPSet_Blacklist.id}"
     type     = "REGULAR"
+}
+resource "aws_waf_rule" "Global_WAF_SQLi_MatchSet" {
+  name        = "${var.GlobalWAFRuleSQLiMatchSetName}"
+  metric_name = "${var.GlobalWAFRuleSQLiMatchSeMetricName}"
+  predicates{
+    data_id = "${aws_waf_sql_injection_match_set.Global_WAF_SQLi_MatchSet.id}"
+    negated = false
+    type = "SqlInjectionMatch"
+  }
+}
+resource "aws_waf_web_acl" "Global_WAF_SQL_Injection_WACL" {
+  name        = "${var.GlobalWAF_SQLIWebACLName}"
+  metric_name = "${var.GlobalWAF_SQLIWebACLMetricName}"
+  logging_configuration {
+    log_destination = "${aws_kinesis_firehose_delivery_stream.Global_WAF_KDF_Delivery_Stream.arn}"
+  }
+  default_action {
+    type = "ALLOW"
   }
   rules {
     action {
       type = "BLOCK"
     }
-    priority = 2
+    priority = 1
     rule_id  = "${aws_waf_rule.Global_WAF_SQLi_MatchSet.id}"
     type     = "REGULAR"
   }
+}
+resource "aws_waf_rule" "Global_WAF_Rule_XSS_MatchSet" {
+  name        = "${var.GlobalWAFRuleXSSMatchSetName}"
+  metric_name = "${var.GlobalWAFRuleSXSSMatchSeMetricName}"
+  predicates {
+    data_id = "${aws_waf_xss_match_set.Global_WAF_XSS_MatchSet.id}"
+    negated = false
+    type = "XssMatch"
+  }
+}
+resource "aws_waf_web_acl" "Global_WAF_XSS_WACL" {
+  name        = "${var.GlobalWAF_XSSWebACLName}"
+  metric_name = "${var.GlobalWAF_XSSWebACLMetricName}"
+  logging_configuration {
+    log_destination = "${aws_kinesis_firehose_delivery_stream.Global_WAF_KDF_Delivery_Stream.arn}"
+  }
+  default_action {
+    type = "ALLOW"
+  }
   rules {
     action {
       type = "BLOCK"
     }
-    priority = 3
+    priority = 1
     rule_id  = "${aws_waf_rule.Global_WAF_Rule_XSS_MatchSet.id}"
     type     = "REGULAR"
+  }
+}
+resource "aws_waf_rule" "Global_WAF_Rule_SizeConstraint_MatchSet" {
+  name        = "${var.GlobalWAFSizeConstraintMatchSetName}"
+  metric_name = "${var.GlobalWAFRuleSConstraintSizeMatchSeMetricName}"
+  predicates {
+    data_id = "${aws_waf_size_constraint_set.Global_WAF_SizeConstraint_MatchSet.id}"
+    negated = false
+    type = "SizeConstraint"
+  }
+}
+resource "aws_waf_web_acl" "Global_WAF_Size_Constraint_WACL" {
+  name        = "${var.GlobalWAF_SizeConstraintWebACLName}"
+  metric_name = "${var.GlobalWAF_SizeConstraintWebACLMetricName}"
+  logging_configuration {
+    log_destination = "${aws_kinesis_firehose_delivery_stream.Global_WAF_KDF_Delivery_Stream.arn}"
+  }
+  default_action {
+    type = "ALLOW"
   }
    rules {
     action {
       type = "BLOCK"
     }
-    priority = 4
+    priority = 1
     rule_id  = "${aws_waf_rule.Global_WAF_Rule_SizeConstraint_MatchSet.id}"
     type     = "REGULAR"
   }
