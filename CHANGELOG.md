@@ -17,3 +17,5 @@
     - Changed / Removed Variables related to SNS Topic that CIS Compliance alerts will go to
     - Updated ReadMe to reflect that you MUST have a subscriber in the SNS Topic for CIS to measure as compliant
     - Added Support for Lambda Data Events (All Current & Future) to be logged via CloudTrail
+- 3 MAY 2019:
+    - Broke apart Global WAF (due to misunderstanding that Rules in a WACL were 'OR' instead of needing to match all...) Web ACLs into 4 seperate for Blacklist, SQLI, XSS and Size Constraints
