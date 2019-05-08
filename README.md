@@ -55,7 +55,7 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 **Below Steps are Done on a Fresh Install of Ubuntu 18.04LTS**
 **Refer to (https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) for Information on how to Install the SSM Agent on Non-Amazon Linux / Ubuntu Distros**
 1. Update Your System
-`sudo apt-get update && sudo apt-get upgrade -y`
+`sudo apt update && sudo apt upgrade -y`
 2. Download Latest Version of Inspector Agent (https://docs.aws.amazon.com/inspector/latest/userguide/inspector_installing-uninstalling-agents.html)
 `wget https://inspector-agent.amazonaws.com/linux/latest/install`
 3. Install Inspector Agent
