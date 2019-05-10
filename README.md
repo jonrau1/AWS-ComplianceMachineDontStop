@@ -30,6 +30,8 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - AWS Lambda automatically runs your code without requiring you to provision or manage servers. Just write the code and upload it to Lambda...it can be directly triggered by AWS services such as S3, DynamoDB, Kinesis, SNS, and CloudWatch...
 - **Config** (https://aws.amazon.com/config/)
     - A service that enables you to assess, audit, and evaluate the configurations of your AWS resources
+- **XRay** (https://aws.amazon.com/xray/)
+    - X-Ray helps developers analyze and debug production, distributed applications, such as those built using a microservices architecture. With X-Ray, you can understand how your application and its underlying services are performing to identify and troubleshoot the root cause of performance issues and errors
 - **CloudWatch Logs** (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/WhatIsCloudWatchLogs.html)
     - Used to monitor, store, and access your log files from Amazon Elastic Compute Cloud (Amazon EC2) instances, AWS CloudTrail, Route 53, and other sources
 - **CloudWatch Events** (https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/WhatIsCloudWatchEvents.html)

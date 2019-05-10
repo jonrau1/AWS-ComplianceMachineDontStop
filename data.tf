@@ -39,3 +39,6 @@ data "aws_iam_policy" "Data_Policy_AWSLambdaExecute" {
 data "aws_iam_policy" "Data_Policy_AWSGlueServiceRole" {
   arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
+data "aws_iam_policy" "Data_Policy_AWSXrayWriteOnlyAccess" {
+  arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+}

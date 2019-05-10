@@ -18,4 +18,8 @@
     - Updated ReadMe to reflect that you MUST have a subscriber in the SNS Topic for CIS to measure as compliant
     - Added Support for Lambda Data Events (All Current & Future) to be logged via CloudTrail
 - 3 MAY 2019:
-    - Broke apart Global WAF (due to misunderstanding that Rules in a WACL were 'OR' instead of needing to match all...) Web ACLs into 4 seperate for Blacklist, SQLI, XSS and Size Constraints
+    - Broke apart Global WAF Web ACLs into 4 seperate for Blacklist, SQLI, XSS and Size Constraints
+- 9 MAY 2019:
+    - Added support for AWS X-Ray by adding Tracing capabilities to Lambda Functions
+        - Added Full Active tracing parameter into Lambda functions
+        - Modified Lambda Execution Policies to include XRay Write Permissions

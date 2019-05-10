@@ -215,6 +215,9 @@ resource "aws_lambda_function" "Lambda_Function_GuardDuty_Log_Parsing" {
   runtime          = "python3.6"
   memory_size      = "${var.GuardDutyLogParsingFunctionMemory}"
   timeout          = "${var.GuardDutyLogParsingFunctionTimeout}"
+  tracing_config {
+    mode = "Active"
+  }
 }
 resource "aws_iam_role" "Lambda_Function_GuardDuty_Log_Parsing_IAMRole" {
   name = "${var.GuardDutyLogParsingFunctionRoleName}"
@@ -238,7 +241,11 @@ resource "aws_iam_role_policy_attachment" "GDLogParsing_Lambda_Attach_LambdaExec
   role       = "${aws_iam_role.Lambda_Function_GuardDuty_Log_Parsing_IAMRole.name}"
   policy_arn = "${data.aws_iam_policy.Data_Policy_AWSLambdaExecute.arn}"
 }
-resource "aws_lambda_permission" "allow_bucket" {
+resource "aws_iam_role_policy_attachment" "GDLogParsing_Lambda_Attach_AWSXrayWriteOnlyAccess" {
+  role       = "${aws_iam_role.Lambda_Function_GuardDuty_Log_Parsing_IAMRole.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AWSXrayWriteOnlyAccess.arn}"
+}
+resource "aws_lambda_permission" "GuardDuty_Lambda_Bucket_Invocation_Permission" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
   function_name = "${aws_lambda_function.Lambda_Function_GuardDuty_Log_Parsing.arn}"
@@ -260,6 +267,9 @@ resource "aws_lambda_function" "Lambda_Function_Inspector_Remediation" {
   runtime          = "python2.7"
   memory_size      = "${var.InspectorRemediationFunctionMemory}"
   timeout          = "${var.InspectorRemediationFunctionTimeout}"
+  tracing_config {
+    mode = "Active"
+  }
 }
 resource "aws_iam_role" "Lambda_Function_Inspector_Remediation_IAMRole" {
   name = "${var.LambdaFunctionInspectorRemediationRoleName}"
@@ -286,6 +296,10 @@ resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_InspectorRO
 resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_SSMFullAccess" {
   role       = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.name}"
   policy_arn = "${data.aws_iam_policy.Data_Policy_AmazonSSMFullAccess.arn}"
+}
+resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_AWSXrayWriteOnlyAccess" {
+  role       = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.name}"
+  policy_arn = "${data.aws_iam_policy.Data_Policy_AWSXrayWriteOnlyAccess.arn}"
 }
 resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_BasicLambdaExec" {
   role       = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.name}"
