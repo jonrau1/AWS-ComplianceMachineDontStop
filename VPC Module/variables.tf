@@ -1,93 +1,47 @@
-variable "aws_region" {
-  default = ""
-  description = "this value will populate the AWS Provider as well as VPC Endpoint Interfaces and Gateways"
+variable "AWS_Region" {
+  default     = "us-east-1"
+  description = "Region will pass to VPC Endpoints"
 }
-variable "aws_access_key" {}
-variable "aws_secret_key" {}
-variable "PrimaryVPCTenancy" {
-  default = ""
-  description = "default or dedicated"
+variable "Network_Resource_Count" {
+  default     = 3
+  description = "Amount of Network Resources Provisioned e.g. Subnets and Route Tables - Adjust for Regional AZ Count and HA Requirements"
 }
-variable "PrimaryVPCCIDRBlock" {
-  default = ""
+variable "CMDS_VPC_CIDR" {
+  default     = "172.17.0.0/16"
+  description = "RFC1918 CIDR for VPC - Subnet CIDR Block Calculations will be handled by Terraform"
 }
-variable "PrimaryVPCDNSSupport" {
-  default = "true"
-  description = "true or false"
+variable "CMDS_VPC_DNS_Support" {
+  default     = "true"
+  description = "Indicates whether the DNS resolution is supported"
 }
-variable "PrimaryVPCDNSHostnames" {
-  default = ""
-  description = "true or false"
+variable "CMDS_VPC_DNS_Hostnames" {
+  default     = "true"
+  description = "Indicates whether instances with public IP addresses get corresponding public DNS hostnames"
 }
-variable "PrimaryVPCTagName" {
-  default = ""
-  description = "Name tag value of the VPC"
+variable "CMDS_VPC_Name_Tag" {
+  default = "fob-omishan-3tvpc"
 }
-variable "PubSnet1CIDRBlock" {
-  default = ""
-  description = "CIDR Block for Public Subnet Number 1"
+variable "CMDS_IGW_Name_Tag" {
+  default = "fob-omishan-3tigw"
 }
-variable "PubSnet1PublicIPOnLaunch" {
-  default = ""
-  description = "true or false"
+variable "CMDS_Public_RTB_Name_Tag" {
+  default = "fob-omishan-3t-pub-rtb"
 }
-variable "PubSnet1NameTag" {
-  default = ""
+variable "CMDS_FlowLogs_CWL_Group_Name" {
+  default = "fob-omishan-3tvpc-flows"
 }
-variable "PrivSnet1CIDRBlock" {
-  default = ""
-  description = "CIDR Block for Private Subnet Number 1 mapping public IP is not needed due to NATGW"
+variable "CMDS_FlowLogs_to_CWL_Role_Name" {
+  default = "fob-omishan-3tvpc-flowrole"
 }
-variable "PrivSnet1NameTag" {
-  default = ""
+variable "CMDS_FlowLogs_to_CWL_Role_Policy_Name" {
+  default = "fobomishan-3tvpc-flowpol"
 }
-variable "PrivSnet2CIDRBlock" {
-  default = ""
-  description = "CIDR Block for Private Subnet Number 2 mapping public IP is not needed due to NATGW"
+variable "VPCE_Interface_SG_Name" {
+  default = "fob-omishan-vpce-firewall"
 }
-variable "PrivSnet2NameTag" {
-  default = ""
+variable "VPCE_Interface_SG_Description" {
+  default = "fob-omishan-vpce-firewall"
 }
-variable "PrimaryVPCIGWNameTag" {
-  default = ""
-  description = "Tag Value for Name of Internet Gateway"
-}
-variable "PublicRTBNameTag" {
-  default = ""
-  description = "Tag Value for Name of the Public Internet-facing Route Table"
-}
-variable "PrimaryVPCNatGWEIPNameTag" {
-  default = ""
-  description = "Name tag for the EIP associated with the NAT-GW"
-}
-variable "PrimaryVPCNatGWNameTag" {
-  default = ""
-  description = "Name tag for the NAT Gateway"
-}
-variable "PrivateRTBNameTag" {
-  default = ""
-  description = "Tag Value for Name of the Private Subnet Route Table"
-}
-variable "PrincipalSecGroupName" {
-  default = ""
-  description = "Group Name is different than Name Tag Value - Same Purpose"
-}
-variable "PrincipalSecGroupDescription" {
-  default = ""
-}
-variable "PrincipalSecGrpSSH-MyIPRange" {
-  default = ""
-  description = "Your Home or Office IP Range for SSH"
-}
-variable "PrimaryVPCDefaultNACLNameTag" {
-  default = ""
-}
-variable "PrimaryVPCFlowLogCWLGroupName" {
-  default = ""
-}
-variable "FlowLogsIAMRoleName" {
-  default = ""
-}
-variable "FlowLogsIAMRolePolicyName" {
-  default = ""
+variable "CMDS_Default_NACL_Name_Tag" {
+  default = "fob-omishan-default-nacl"
 }
