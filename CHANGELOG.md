@@ -23,3 +23,10 @@
     - Added support for AWS X-Ray by adding Tracing capabilities to Lambda Functions
         - Added Full Active tracing parameter into Lambda functions
         - Modified Lambda Execution Policies to include XRay Write Permissions
+- 11 MAY 2019:
+    - Overhauled VPC Module
+        - CIDR Block calculations take advantage of "cidrsubnet" resource to support automatic calculations off of the VPC CIDR
+        - Subnets, NAT Gateways and NAT Gateway EIPs are defined via Count
+        - Dynamic Tagging of count.index defined Resources
+        - Added Cloudwatch Logs VPC Interface Endpoint
+        - Cleaner Formatting & Variable Naming Conventions
