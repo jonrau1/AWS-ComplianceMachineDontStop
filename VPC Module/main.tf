@@ -73,11 +73,6 @@ resource "aws_route_table_association" "Private_Subnet_Association" {
   subnet_id      = "${element(aws_subnet.CMDS_Private_Subnets.*.id, count.index)}"
   route_table_id = "${element(aws_route_table.CMDS_Private_RTB.*.id, count.index)}"
 }
-resource "aws_route_table_association" "DB_Subnet_Association" {
-  count          = "${var.Network_Resource_Count}"
-  subnet_id      = "${element(aws_subnet.CMDS_DB_Subnets.*.id, count.index)}"
-  route_table_id = "${element(aws_route_table.CMDS_Private_RTB.*.id, count.index)}"
-}
 resource "aws_vpc_endpoint" "CMDS_VPCE_Gateway_S3" {
   vpc_id            = "${aws_vpc.CMDS_VPC.id}"
   service_name      = "com.amazonaws.${var.AWS_Region}.s3"
