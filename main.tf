@@ -172,7 +172,7 @@ resource "aws_inspector_resource_group" "Inspector_Resource_Group" {
   }
 }
 resource "aws_inspector_assessment_target" "Inspector_Assessment_Target_All" {
-  name               = "${var.InspectorTargetGroupName}"
+  name = "${var.InspectorTargetGroupName}"
 }
 // not specifiying 'resource_group_arn' will apply to all EC2 w/ Inspector Agent
 resource "aws_inspector_assessment_template" "Inspector_Assessment_Template" {
@@ -206,8 +206,8 @@ resource "aws_s3_bucket_object" "GuardDuty_Log_Parsing_Lambda_Object_Upload" {
   source = "${var.PathToLambdaUpload}/gd-sorter.zip"
 }
 resource "aws_lambda_function" "Lambda_Function_GuardDuty_Log_Parsing" {
-  s3_bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
-  s3_key = "${aws_s3_bucket_object.GuardDuty_Log_Parsing_Lambda_Object_Upload.id}"
+  s3_bucket        = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
+  s3_key           = "${aws_s3_bucket_object.GuardDuty_Log_Parsing_Lambda_Object_Upload.id}"
   function_name    = "${var.GuardDutyLogParsingFunctionName}"
   description      = "${var.GuardDutyLogParsingFunctionDescription}"
   role             = "${aws_iam_role.Lambda_Function_GuardDuty_Log_Parsing_IAMRole.arn}"
@@ -258,8 +258,8 @@ resource "aws_s3_bucket_object" "Inspector_Remediation_Lambda_Object_Upload" {
   source = "${var.PathToLambdaUpload}/lambda-auto-remediate.zip"
 }
 resource "aws_lambda_function" "Lambda_Function_Inspector_Remediation" {
-  s3_bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
-  s3_key = "${aws_s3_bucket_object.Inspector_Remediation_Lambda_Object_Upload.id}"
+  s3_bucket        = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
+  s3_key           = "${aws_s3_bucket_object.Inspector_Remediation_Lambda_Object_Upload.id}"
   function_name    = "${var.InspectorRemediationFunctionName}"
   description      = "${var.InspectorRemediationFunctionDescription}"
   role             = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.arn}"
@@ -309,7 +309,7 @@ resource "aws_sns_topic" "Inspector_Remediation_SNS_Topic" {
   name = "${var.InspectorRemediationSNSTopicName}"
 }
 resource "aws_sns_topic_policy" "Inspector_Remediation_SNS_Topic_Policy" {
-  arn = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
+  arn    = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
   policy = "${data.aws_iam_policy_document.Inspector_Remediation_SNS_Topic_Policy_Data.json}"
 }
 resource "aws_lambda_permission" "Inspector_Remediation_SNS_Lambda_Permission" {
@@ -336,7 +336,7 @@ resource "aws_config_configuration_recorder" "Config_Configuration_Recorder" {
 resource "aws_config_delivery_channel" "Config_Configuration_Delivery_Channel" {
   name           = "${var.ConfigurationDeliveryChannelName}"
   s3_bucket_name = "${aws_s3_bucket.Config_Artifacts_S3_Bucket.bucket}"
-  sns_topic_arn = "${aws_sns_topic.Config_SNS_Topic.id}"
+  sns_topic_arn  = "${aws_sns_topic.Config_SNS_Topic.id}"
 }
 resource "aws_config_configuration_recorder_status" "Config_Configuration_Recorder_Status" {
   name       = "${aws_config_configuration_recorder.Config_Configuration_Recorder.name}"
@@ -344,7 +344,7 @@ resource "aws_config_configuration_recorder_status" "Config_Configuration_Record
   depends_on = ["aws_config_delivery_channel.Config_Configuration_Delivery_Channel"]
 }
 resource "aws_sns_topic" "Config_SNS_Topic" {
-  name = "${var.ConfigSNSTopicName}"
+  name              = "${var.ConfigSNSTopicName}"
   kms_master_key_id = "${aws_kms_key.SNS_Customer_CMK.id}"
   policy = <<POLICY
 {
@@ -382,12 +382,12 @@ resource "aws_iam_role" "Config_IAM_Role" {
 POLICY
 }
 resource "aws_iam_role_policy_attachment" "Config_Role_Managed_Policy_Attachment" {
-  role = "${aws_iam_role.Config_IAM_Role.name}"
+  role       = "${aws_iam_role.Config_IAM_Role.name}"
   policy_arn = "${data.aws_iam_policy.Data_Policy_AWSConfigRole.arn}"
 }
 resource "aws_iam_role_policy" "Config_Role_Policy" {
-  name = "${var.ConfigIAMRolePolicyName}"
-  role = "${aws_iam_role.Config_IAM_Role.id}"
+  name   = "${var.ConfigIAMRolePolicyName}"
+  role   = "${aws_iam_role.Config_IAM_Role.id}"
   policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -432,7 +432,7 @@ resource "aws_s3_bucket" "Server_Access_Log_S3_Bucket" {
 }
 resource "aws_s3_bucket" "Config_Artifacts_S3_Bucket" { 
   bucket = "${var.ConfigArtifactsBucketName}"
-  acl = "private"
+  acl    = "private"
 
   versioning {
       enabled = true
@@ -454,7 +454,7 @@ resource "aws_s3_bucket" "Config_Artifacts_S3_Bucket" {
 resource "aws_securityhub_account" "Security_Hub_Enabled" {}
 // Hits SecHub API - turns it on for account Auto-Enables CIS Benchmark Rules -- need to turn on config first
 resource "aws_sns_topic" "CIS_Compliance_Alerts_SNS_Topic" {
-  name = "${var.CISComplianceAlertsSNSTopicName}"
+  name              = "${var.CISComplianceAlertsSNSTopicName}"
   kms_master_key_id = "${aws_kms_key.SNS_Customer_CMK.id}" 
 }
 resource "aws_cloudwatch_log_group" "CIS_Compliance_CloudWatch_LogsGroup" {
@@ -480,8 +480,8 @@ resource "aws_iam_role" "CloudWatch_LogsGroup_IAM_Role" {
 EOF
 }
 resource "aws_iam_role_policy" "CIS_Compliance_CloudWatch_LogsGroup_Policy" {
-  name = "${var.CloudWatchLogsGroupPolicyName}"
-  role = "${aws_iam_role.CloudWatch_LogsGroup_IAM_Role.id}"
+  name   = "${var.CloudWatchLogsGroupPolicyName}"
+  role   = "${aws_iam_role.CloudWatch_LogsGroup_IAM_Role.id}"
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -505,11 +505,11 @@ resource "aws_cloudtrail" "CIS_Compliance_CloudTrail_Trail" {
   name                          = "${var.CISComplianceCloudTrailName}" 
   s3_bucket_name                = "${aws_s3_bucket.CloudTrail_Logs_S3_Bucket.id}"
   include_global_service_events = true
-  is_multi_region_trail = true
-  enable_log_file_validation = true
-  kms_key_id = "${aws_kms_key.CloudTrail_Customer_CMK.arn}"
-  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.CIS_Compliance_CloudWatch_LogsGroup.arn}"
-  cloud_watch_logs_role_arn = "${aws_iam_role.CloudWatch_LogsGroup_IAM_Role.arn}"
+  is_multi_region_trail         = true
+  enable_log_file_validation    = true
+  kms_key_id                    = "${aws_kms_key.CloudTrail_Customer_CMK.arn}"
+  cloud_watch_logs_group_arn    = "${aws_cloudwatch_log_group.CIS_Compliance_CloudWatch_LogsGroup.arn}"
+  cloud_watch_logs_role_arn     = "${aws_iam_role.CloudWatch_LogsGroup_IAM_Role.arn}"
 
   event_selector {
     read_write_type           = "All"
@@ -958,10 +958,10 @@ resource "aws_kinesis_firehose_delivery_stream" "GuardDuty_Finding_KDF_Delivery_
   name        = "${var.GuardDutyFindingKinesisFirehoseStreamName}"
   destination = "extended_s3"
   extended_s3_configuration {
-    prefix = "raw/firehose/"
-    role_arn   = "${aws_iam_role.GuardDuty_Finding_KDF_Delivery_Stream_Role.arn}"
-    bucket_arn = "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.arn}"
-    buffer_size = "${var.GuardDutyFindingKDFDeliveryStream_BufferSize}"
+    prefix          = "raw/firehose/"
+    role_arn        = "${aws_iam_role.GuardDuty_Finding_KDF_Delivery_Stream_Role.arn}"
+    bucket_arn      = "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.arn}"
+    buffer_size     = "${var.GuardDutyFindingKDFDeliveryStream_BufferSize}"
     buffer_interval = "${var.GuardDutyFindingKDFDeliveryStream_BufferInterval}"
   }
 }
@@ -1034,8 +1034,8 @@ resource "aws_iam_role_policy_attachment" "GuardDuty_Finding_Stream_Role_Attachm
   policy_arn = "${aws_iam_policy.GuardDuty_Finding_KDF_Delivery_Stream_Role_Policy.arn}"
 }
 resource "aws_cloudwatch_event_rule" "GuardDuty_Finding_CloudWatch_Event_Rule" {
-  name        = "${var.GuardDutyFindingCloudWatchEventRuleName}"
-  description = "${var.GuardDutyFindingCloudWatchEventRuleDescription}"
+  name          = "${var.GuardDutyFindingCloudWatchEventRuleName}"
+  description   = "${var.GuardDutyFindingCloudWatchEventRuleDescription}"
   event_pattern = <<PATTERN
 {
   "source": [
@@ -1107,10 +1107,10 @@ resource "aws_glue_catalog_database" "GuardDuty_Findings_Parsed_DataCatalogDB" {
   name = "${var.GuardDutyFindingsGlueDBName}"
 }
 resource "aws_glue_crawler" "GuardDuty_Findings_Parsed_Glue_Crawler" {
-  name = "${var.GuardDutyFindingsCrawlerName}"
+  name          = "${var.GuardDutyFindingsCrawlerName}"
   database_name = "${aws_glue_catalog_database.GuardDuty_Findings_Parsed_DataCatalogDB.name}"
-  role = "${aws_iam_role.GuardDuty_Findings_Parsed_Glue_Crawler_Role.arn}"
-  schedule = "cron(0/15 * * * ? *)"
+  role          = "${aws_iam_role.GuardDuty_Findings_Parsed_Glue_Crawler_Role.arn}"
+  schedule      = "cron(0/15 * * * ? *)"
   schema_change_policy {
       update_behavior = "UPDATE_IN_DATABASE"
   }

@@ -30,3 +30,7 @@
         - Dynamic Tagging of count.index defined Resources
         - Added Cloudwatch Logs VPC Interface Endpoint
         - Cleaner Formatting & Variable Naming Conventions
+- 14 MAY 2019:
+    - Added support for ElasticSearch Service - AWS' managed ELK Stack
+        - Includes Cognito Support to provide authentication & authroization into Kibana
+    - Cleaned up formatting of main.tf files, Removed terraform.tfvars and references to Access Keys & Secret Access Keys in favor of using STS

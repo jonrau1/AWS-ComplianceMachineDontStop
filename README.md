@@ -5,6 +5,8 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 ## Getting Started
 
 ### Baseline Knowledge Required
+- **UPDATE** I have removed the `terraform.tfvars` files as the better way to use Terraform is to provide a properly permissioned EC2 Instance Profile without any keys on the instance. The `provider.tf` files now have the only thing needed (a Region) to run `terraform init` with the proper role attached
+    - Refer to my other Repo here for Remote State Management w/ Terraform: https://github.com/jonrau1/AWS-CodePipeline-TerraformCICD-Workshop
 - Basic Level Understanding of navigating AWS Console, usage of SSH (or however you use Terraform) and Linux text editors (Vi, Vim, Nano, etc)
 - Basic Knowledge on Installing / Maintaing AWS Simple Systems Manager (SSM) and Amazon Inspector Agents on your Linux/Windows EC2 Instances
 - Basic Level Understanding of how AWS Security, Identity & Compliance Services Work with One Another
@@ -18,6 +20,10 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
     - KMS makes it easy for you to create and manage keys and control the use of encryption across a wide range of AWS services and in your applications. AWS KMS is a secure and resilient service that uses FIPS 140-2 validated hardware security modules to protect your keys
 - **Security Hub** (https://aws.amazon.com/security-hub/)
     - Security Hub gives you a comprehensive view of your high-priority security alerts and compliance status across AWS accounts
+- **ElasticSearch Service** (https://aws.amazon.com/elasticsearch-service/)
+    -  Elasticsearch Service is a fully managed service that makes it easy for you to deploy, secure, and operate Elasticsearch at scale with zero down time. The service offers open-source Elasticsearch APIs, managed Kibana, and integrations with Logstash and other AWS Services, enabling you to securely ingest data from any source and search, analyze, and visualize it in real time.
+- **Cognito** (https://aws.amazon.com/cognito/)
+    - Cognito lets you add user sign-up, sign-in, and access control to your web and mobile apps quickly and easily. Amazon Cognito scales to millions of users and supports sign-in with social identity providers, such as Facebook, Google, and Amazon, and enterprise identity providers via SAML 2.0.
 - **Glue** (https://aws.amazon.com/glue/)
     - AWS Glue is a fully managed extract, transform, and load (ETL) service that makes it easy for customers to prepare and load their data for analytics.
 - **Kinesis Data Firehose** (https://aws.amazon.com/kinesis/data-firehose/)
@@ -72,27 +78,28 @@ These Terraform Scripts are made with using the Preview of AWS Security Hub in M
 `sudo mv terraform /usr/local/bin/`
 8. Ensure that Terraform is Installed Correctly
 `terraform --version`
-9. Ensure your EC2 Instances have an Instance Profile that allows full access to SSM Attached to them (https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-configuring-access-role.html)
+9. To use Systems Manager with your EC2 Instances, ensure your EC2 Instances have an Instance Profile that allows full access to SSM Attached to them (https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-configuring-access-role.html)
 
 ### Installing & Configuration
 1. Create & Navigate to a New Directory
 `mkdir aws-cmds && cd aws-cmds`
 2. Clone this Repo
 `git clone https://github.com/jonrau1/AWS-ComplianceMachineDontStop.git`
-3. Add your Region to the *provider.tf* 
+3. Add your Region to the *provider.tf* - **Ensure your EC2 Instance has an Instance Profile that allows permissions to deploy all CMDS Resources**
 `nano provider.tf`
-4. Enter your AWS Secret Key & AWS Access Key into *terraform.tfvars*
-`nano terraform.tfvars`
-5. Fill out the *variables.tf* file
+4. Fill out the *variables.tf* file
 `nano variables.tf`
-6. Ensure proper elements for your Region from *variables.tf* are Referenced in *data.tf*
+5. Ensure proper elements for your Region from *variables.tf* are Referenced in *data.tf*
 `nano data.tf`
-7. (Only if Using WAF) navigate to WAF Sub-Directory
+6. (Only if Using WAF) navigate to WAF Sub-Directory
 `cd AWS WAF`
-8. (Only if Using WAF) repeat steps 3-5 & modify Rules & IPs based on reccomendations from https://d0.awsstatic.com/whitepapers/Security/aws-waf-owasp.pdf
+7. (Only if Using WAF) repeat steps 3-5 & modify Rules & IPs based on reccomendations from https://d0.awsstatic.com/whitepapers/Security/aws-waf-owasp.pdf
 `nano waf.tf`
-9. (Only if using VPC Module) fill out Variables -- make sure to specify Region as it is used by VPC Endpoints (PrivateLink)
+8. (Only if using VPC Module) fill out Variables -- make sure to specify Region as it is used by VPC Endpoints (PrivateLink)
 `cd VPC Module` && `nano variables.tf`
+9. (Only if using ElasticSearch Service Module) fill out Variables 
+    - **WARNING: ES may take over an hour to deploy depending on how you modify the deployment**
+`cd ElasticSearch Service` && `nano variables.tf`
 #### !! Notes on `Variables.tf` !!
 - There is a List Variable for Amazon Inspector ARNs for the Rules Packages within for US-EAST-1 and US-WEST-1 Regions, you will need to modify that whole list for regions outside of US-EAST-1/US-WEST-1 and modify the correct variable reference within `main.tf`
 - You will also need to modify `data.tf` to use the populated `InspectorRemediationSNSTopicPolicyData_*` Variable for your Region within the Resource Element: `data "aws_iam_policy_document" "Inspector_Remediation_SNS_Topic_Policy_Data"`
@@ -125,6 +132,8 @@ This Proof of Value is only a small step towards an excellent Security Posture f
 ### Modifications to Deployment / Further Configuration
 - Add AWS-Managed / Custom Config Rules to your AWS Config Setup
 - Add Customer Providers into Security Hub / GuardDuty from Marketplace
+- Ingest Data into ElasticSearch Service
+    - https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-aws-integrations.html
 - Modify WAF IPSet Blacklist / Create WAF IPSet Whitelist
 - Add Additional WAF Match Sets (Conditions)
 - Apply WAF WACL to a CloudFront Distribution

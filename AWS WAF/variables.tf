@@ -1,5 +1,3 @@
-variable "aws_access_key" {}
-variable "aws_secret_key" {}
 variable "GlobalWAFIPSetName" {
   default = ""
   description = "name of the WAF IP Set for Global WAF WACL"
