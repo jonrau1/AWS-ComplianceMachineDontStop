@@ -32,13 +32,14 @@ resource "aws_internet_gateway" "CMDS_IGW" {
   }
 }
 resource "aws_route_table" "CMDS_Public_RTB" {
+  count  = "${var.Network_Resource_Count}"
   vpc_id = "${aws_vpc.CMDS_VPC.id}"
   route {
       cidr_block = "0.0.0.0/0"
       gateway_id = "${aws_internet_gateway.CMDS_IGW.id}"
   }
   tags {
-    Name = "${var.CMDS_Public_RTB_Name_Tag}"
+    Name = "PUB-RTB-${element(aws_subnet.CMDS_Public_Subnets.*.id, count.index)}"
   }
 }
 resource "aws_eip" "NATGW_Elastic_IPs" {
@@ -67,6 +68,11 @@ resource "aws_route_table" "CMDS_Private_RTB" {
   tags {
     Name = "PRIV-RTB-${element(aws_subnet.CMDS_Private_Subnets.*.id, count.index)}"
   }
+}
+resource "aws_route_table_association" "Public_Subnet_Association" {
+  count          = "${var.Network_Resource_Count}"
+  subnet_id      = "${element(aws_subnet.CMDS_Public_Subnets.*.id, count.index)}"
+  route_table_id = "${element(aws_route_table.CMDS_Public_RTB.*.id, count.index)}"
 }
 resource "aws_route_table_association" "Private_Subnet_Association" {
   count          = "${var.Network_Resource_Count}"
