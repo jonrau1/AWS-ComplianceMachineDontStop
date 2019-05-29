@@ -34,3 +34,10 @@
     - Added support for ElasticSearch Service - AWS' managed ELK Stack
         - Includes Cognito Support to provide authentication & authroization into Kibana
     - Cleaned up formatting of main.tf files, Removed terraform.tfvars and references to Access Keys & Secret Access Keys in favor of using STS
+- 28 MAY 2019:
+    - Greatly cleaned up the primary Main.tf and Variables.tf
+        - Clearer Named Variable Titles are now present (underscore galore)
+        - Removed extraneous Variables for thing such as Descriptions, Policy Names, Roles names, etc to promote consistent naming from the main resource
+        - Added Comments within Main.tf to add rationale and descriptions of Terraformed resources to greatly expand upon the context
+        - Re-Organized some content to try as much as possible to group like resources together
+        - Added statically defined arguments where adding Variables added too much end-user burden

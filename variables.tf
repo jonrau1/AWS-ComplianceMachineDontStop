@@ -1,35 +1,28 @@
-variable "GuardDutyPublishingFrequency" {
-  default = "FIFTEEN_MINUTES"
+variable "GuardDuty_Finding_Publishing_Frequency" {
+  default     = "FIFTEEN_MINUTES"
+  description = " Specifies the frequency of notifications sent for subsequent finding occurrences"
 }
-variable "CloudTrailCMKDescription" {
-  default = "this key for cloudtrail"
+variable "CloudTrail_CMK_Deletion_Window" {
+  default = 7
 }
-variable "CloudTrailCMKDeletionWindow" {
-  default = "30"
+variable "Config_Recorder_SNS_Customer_CMK_Deletion_Window" {
+  default = 7
 }
-variable "SNSCMKDescription" {
+variable "CloudTrail_Key_Alias_Name" {
+  default =""
+}
+variable "Config_SNS_Key_Alias_Name" {
   default = ""
 }
-variable "SNSCMKDeletionWindow" {
-  default = "30"
-}
-variable "CloudTrailKeyAlias" {
-  default ="alias/"
-}
-variable "SNSKeyAlias" {
-  default = "alias/"
-}
-variable "InspectorResourceGroupNameTag" {
-  default = ""
-}
-variable "InspectorTargetGroupName" {
+variable "Inspector_Assessment_Target_All_Group_Name" {
   default = ""
 }
 variable "InspectorAssessmentTemplateName" {
   default = ""
 }
-variable "InspectorAssessmentRulesPackages_USEast1" {
-  type = "list"
+variable "Inspector_Assessment_Rules_Packages_USEast1" {
+  type        = "list"
+  description = "All Inspector Assessment Rules for Target All Group"
   default = [
    "arn:aws:inspector:us-east-1:316112463485:rulespackage/0-gEjTy7T7", // NIST Common Vulnerability & Exposures (CVEs)
    "arn:aws:inspector:us-east-1:316112463485:rulespackage/0-rExsr2X8", // CIS OpSys Security Configuration Benchmark
@@ -38,56 +31,42 @@ variable "InspectorAssessmentRulesPackages_USEast1" {
    "arn:aws:inspector:us-east-1:316112463485:rulespackage/0-gBONHN9h", // RBA (Runtime Behavior Analytics)
    ]
 }
-variable "InspectorAssessmentRulesPackages_USWest1" {
-  type = "list"
+variable "Inspector_Assessment_Rules_Packages_USWest1" {
+  type        = "list"
+  description = "All Inspector Assessment Rules for Target All Group"
   default = [
    "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-TKgzoVOa", // NIST Common Vulnerability & Exposures (CVEs)
    "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-xUY8iRqX", // CIS OpSys Security Configuration Benchmark
    "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-TxmXimXF", // AWS Security Best Practices
    "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-byoQRFYm", // Network Reachability
    "arn:aws:inspector:us-west-1:166987590008:rulespackage/0-yeYxlt0x", // RBA (Runtime Behavior Analytics)
-   ]
+  ]
 }
-variable "LambdaArtifactBucketName" {
+variable "Lambda_Artifacts_S3_Bucket_Name" {
   default = ""
 }
-variable "LambdaUploadPrefix" {
-  default = "lambda"
-}
-variable "PathToLambdaUpload" {
+variable "Path_To_Lambda_Upload" {
   default = "~/aws-cmds/functions/"
 }
-variable "GuardDutyLogParsingFunctionName" {
+variable "GuardDuty_LogParsing_Function_Name" {
   default = ""
 }
-variable "GuardDutyLogParsingFunctionDescription" {
+variable "GuardDuty_LogParsing_FunctionMemory" {
+  default = 128
+}
+variable "GuardDuty_LogParsing_FunctionTimeout" {
+  default = 240
+}
+variable "Inspector_Remediation_Function_Name" {
   default = ""
 }
-variable "GuardDutyLogParsingFunctionMemory" {
-  default = "128"
+variable "Inspector_Remediation_Function_Memory" {
+  default = 640
 }
-variable "GuardDutyLogParsingFunctionTimeout" {
-  default = "240"
+variable "Inspector_Remediation_Function_Timeout" {
+  default = 240
 }
-variable "GuardDutyLogParsingFunctionRoleName" {
-  default = ""
-}
-variable "InspectorRemediationFunctionName" {
-  default = ""
-}
-variable "InspectorRemediationFunctionDescription" {
-  default = ""
-}
-variable "InspectorRemediationFunctionMemory" {
-  default = "640"
-}
-variable "InspectorRemediationFunctionTimeout" {
-  default = "240"
-}
-variable "LambdaFunctionInspectorRemediationRoleName" {
-  default = ""
-}
-variable "InspectorRemediationSNSTopicName" {
+variable "Inspector_Remediation_SNS_Topic_Name" {
   default = ""
 }
 variable "InspectorRemediationSNSTopicPolicyData_USEAST1_Principal" {
@@ -102,62 +81,46 @@ variable "InspectorRemediationSNSTopicPolicyData_USWEST1_Principal" {
 variable "InspectorRemediationSNSTopicPolicyData_USWEST2_Principal" {
   default = "arn:aws:iam::758058086616:root"
 }
-variable "ConfigurationRecorderName" {
+variable "Config_Configuration_Recorder_Name" {
   default = ""
 }
-variable "ConfigurationDeliveryChannelName" {
+variable "Config_Configuration_Delivery_Channel_Name" {
   default = ""
 }
-variable "ConfigSNSTopicName" {
+variable "Config_SNS_Topic_Name" {
   default = ""
 }
-variable "ConfigIAMRoleName" {
+variable "Server_Access_Log_S3_Bucket_Name" {
   default = ""
 }
-variable "ConfigIAMRolePolicyName" {
+variable "Server_Access_Log_S3_Bucket_Name" {
   default = ""
 }
-variable "ServerAccessLogS3BucketName" {
+variable "CIS_Compliance_Alerts_SNS_Topic_Name" {
   default = ""
 }
-variable "ConfigArtifactsBucketName" {
+variable "CIS_Compliance_CloudWatch_LogsGroup_Name" {
   default = ""
 }
-variable "CISComplianceAlertsSNSTopicName" {
+variable "CIS_Compliance_CloudTrail_Trail_Name" {
   default = ""
 }
-variable "CISComplianceCloudWatchLogsGroupName" {
-  default = ""
-}
-variable "CloudWatchLogsGroupRoleName" {
-  default = ""
-}
-variable "CloudWatchLogsGroupPolicyName" {
-  default = ""
-}
-variable "CISComplianceCloudTrailName" {
-  default = ""
-}
-variable "CloudTrailLogS3BucketName" {
+variable "CIS_Compliance_CloudTrail_Logs_S3_Bucket_Name" {
   default = ""
 }
 variable "CIS_Metric_Alarm_Namespace" {
   default = "LogMetrics"
 }
-variable "CMKAdminsIAMGroupName" {
+variable "KMS_Key_Admin_IAM_Group_Name" {
   default = ""
 }
-variable "CMKAdminsIAMPolicyName" {
+variable "KMS_Key_Admin_IAM_User_Name" {
   default = ""
 }
-variable "CMKAdminsIAMPolicyDescription" {
-  default = ""
-}
-variable "CMKAdminsIAMUserName" {
-  default = ""
-}
-variable "CMKAdminIAMGroupMembershipName" {
-  default = ""
+## Please ensure this is lower case
+variable "GuardDuty_Finding_KDF_Delivery_Stream" {
+  default     = "lower-case-please"
+  description = "Ensure this is lowercase as the value is prepended to the S3 bucket name"
 }
 variable "GuardDutyFindingKDFDeliveryStream_BufferSize" {
   default = "5"
@@ -167,48 +130,15 @@ variable "GuardDutyFindingKDFDeliveryStream_BufferInterval" {
   default = "300"
   description = "Buffer incoming data for the specified period of time in seconds before delivering it to the destination The default value is 300."
 }
-variable "GuardDutyFindingKinesisFirehoseStreamName" {
+variable "GuardDuty_Finding_CloudWatch_Event_Rule_Name" {
   default = ""
 }
-variable "GuardDutyFindingsRawLogBucket" {
+variable "GuardDuty_Finding_CWEtoKDF_Role_Name" {
   default = ""
 }
-variable "GuardDutyFindingKinesisFirehoseStreamRoleName" {
+variable "GuardDuty_Findings_Parsed_DataCatalogDB_Name" {
   default = ""
 }
-variable "GuardDutyFindingKinesisFirehoseStreamPolicyName" {
-  default = ""
-}
-variable "GuardDutyFindingKinesisFirehoseStreamPolicyDescription" {
-  default = ""
-}
-variable "GuardDutyFindingCloudWatchEventRuleName" {
-  default = ""
-}
-variable "GuardDutyFindingCloudWatchEventRuleDescription" {
-  default = ""
-}
-variable "GuardDutyFindingCWEtoKDFRoleName" {
-  default = ""
-}
-variable "GuardDutyFindingCWEtoKDFRolePolicyName" {
-  default = ""
-}
-variable "GuardDutyFindingCWEtoKDFRolePolicyDescription" {
-  default = ""
-}
-variable "GuardDutyFindingsGlueDBName" {
-  default = ""
-}
-variable "GuardDutyFindingsCrawlerName" {
-  default = ""
-}
-variable "GuardDutyFindingsGlueCrawlerRoleName" {
-  default = ""
-}
-variable "GuardDutyFindingsGlueCrawlerRoleS3PolicyName" {
-  default = ""
-}
-variable "GuardDutyFindingsGlueCrawlerRoleS3PolicyDescription" {
+variable "GuardDuty_Findings_Parsed_Glue_Crawler_Name" {
   default = ""
 }

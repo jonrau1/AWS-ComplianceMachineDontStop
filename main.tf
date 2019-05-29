@@ -1,11 +1,13 @@
+## Enables a GuardDuty Detector in your Region Specified by Provider.tf
 resource "aws_guardduty_detector" "GuardDuty_Detector" {
   enable = true
-  finding_publishing_frequency = "${var.GuardDutyPublishingFrequency}"
+  finding_publishing_frequency = "${var.GuardDuty_Finding_Publishing_Frequency}"
 }
+## Creates a CMK to use for Encrypting CloudTrail Logs
 resource "aws_kms_key" "CloudTrail_Customer_CMK" {
-  description             = "${var.CloudTrailCMKDescription}"
-  deletion_window_in_days = "${var.CloudTrailCMKDeletionWindow}"
-  enable_key_rotation = true
+  description             = "CloudTrail Encryption - Managed by Terraform"
+  deletion_window_in_days = "${var.CloudTrail_CMK_Deletion_Window}"
+  enable_key_rotation     = true
   policy = <<POLICY
 {
     "Version": "2012-10-17",
@@ -79,10 +81,11 @@ resource "aws_kms_key" "CloudTrail_Customer_CMK" {
 }
 POLICY
 }
-resource "aws_kms_key" "SNS_Customer_CMK" {
-  description             = "${var.SNSCMKDescription}"
-  deletion_window_in_days = "${var.SNSCMKDeletionWindow}"
-  enable_key_rotation = true
+## Creates a KMS Key for using to Encrypt AWS Config Recordings sent to SNS
+resource "aws_kms_key" "Config_Recorder_SNS_Customer_CMK" {
+  description             = "Encrypt AWS Config Recordings sent to SNS - Manged by Terraform"
+  deletion_window_in_days = "${var.Config_Recorder_SNS_Customer_CMK_Deletion_Window}"
+  enable_key_rotation     = true
   policy = <<POLICY
 {
     "Version": "2012-10-17",
@@ -157,33 +160,29 @@ resource "aws_kms_key" "SNS_Customer_CMK" {
 }
 POLICY
 }
-
-resource "aws_kms_alias" "Trail_Key_Alias" {
-  name          = "${var.CloudTrailKeyAlias}"
+resource "aws_kms_alias" "CloudTrail_Key_Alias" {
+  name          = "alias/${var.CloudTrail_Key_Alias_Name}"
   target_key_id = "${aws_kms_key.CloudTrail_Customer_CMK.arn}"
 }
-resource "aws_kms_alias" "SNS_Key_Alias" {
-  name          = "${var.SNSKeyAlias}"
-  target_key_id = "${aws_kms_key.SNS_Customer_CMK.arn}"
+resource "aws_kms_alias" "Config_SNS_Key_Alias" {
+  name          = "alias/${var.Config_SNS_Key_Alias_Name}"
+  target_key_id = "${aws_kms_key.Config_Recorder_SNS_Customer_CMK.arn}"
 }
-resource "aws_inspector_resource_group" "Inspector_Resource_Group" {
-  tags = {
-    Name = "${var.InspectorResourceGroupNameTag}"
-  }
-}
+## not specifiying 'resource_group_arn' in Assessment Target will apply to all EC2 Instances w/ Inspector Agent for
 resource "aws_inspector_assessment_target" "Inspector_Assessment_Target_All" {
-  name = "${var.InspectorTargetGroupName}"
+  name = "${var.Inspector_Assessment_Target_All_Group_Name}"
 }
-// not specifiying 'resource_group_arn' will apply to all EC2 w/ Inspector Agent
+## Uses LIST Variables for Rule Packages
 resource "aws_inspector_assessment_template" "Inspector_Assessment_Template" {
-  name       = "${var.InspectorAssessmentTemplateName}"
-  target_arn = "${aws_inspector_assessment_target.Inspector_Assessment_Target_All.arn}"
-  duration   = 3600
-
-  rules_package_arns = "${var.InspectorAssessmentRulesPackages_USEast1}"
+  name               = "${var.Inspector_Assessment_Template_Name}"
+  target_arn         = "${aws_inspector_assessment_target.Inspector_Assessment_Target_All.arn}"
+  duration           = 3600
+  rules_package_arns = "${var.Inspector_Assessment_Rules_Packages_USEast1}"
 }
+## Creates S3 Bucket to upload Lambda Function ZIPs into for later usage
+## Bucket is Versioned, Logged via CT, Logged for HTTP Access Logs and Uses SSE-S3 Encryption
 resource "aws_s3_bucket" "Lambda_Artifacts_S3_Bucket" {
-  bucket = "${var.LambdaArtifactBucketName}"
+  bucket = "${var.Lambda_Artifacts_S3_Bucket_Name}"
   acl    = "private"
   versioning {
     enabled = true
@@ -200,27 +199,31 @@ resource "aws_s3_bucket" "Lambda_Artifacts_S3_Bucket" {
     }
   }
 }
+## Uploads the GuardDuty Log Parsing Lambda Function to the Created S3 Bucket
 resource "aws_s3_bucket_object" "GuardDuty_Log_Parsing_Lambda_Object_Upload" {
   bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
-  key    = "${var.LambdaUploadPrefix}/gd-sorter.zip"
-  source = "${var.PathToLambdaUpload}/gd-sorter.zip"
+  key    = "CMDS-Lambdas/gd-sorter.zip"
+  source = "${var.Path_To_Lambda_Upload}/gd-sorter.zip"
 }
+## Creates Lambda Function to Parse out GuardDuty Findings for crawling with Glue & Querying with Athena
+## X-Ray Tracing is Enabled to get Traces for Debug & APM
 resource "aws_lambda_function" "Lambda_Function_GuardDuty_Log_Parsing" {
   s3_bucket        = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
   s3_key           = "${aws_s3_bucket_object.GuardDuty_Log_Parsing_Lambda_Object_Upload.id}"
-  function_name    = "${var.GuardDutyLogParsingFunctionName}"
-  description      = "${var.GuardDutyLogParsingFunctionDescription}"
-  role             = "${aws_iam_role.Lambda_Function_GuardDuty_Log_Parsing_IAMRole.arn}"
+  function_name    = "${var.GuardDuty_LogParsing_Function_Name}"
+  description      = "Lambda Function to Parse out Findings from GuardDuty for eventual consumption by Glue"
+  role             = "${aws_iam_role.Lambda_Function_GuardDuty_Log_Parsing_IAM_Role.arn}"
   handler          = "gd-sorter.lambda_handler"
   runtime          = "python3.6"
-  memory_size      = "${var.GuardDutyLogParsingFunctionMemory}"
-  timeout          = "${var.GuardDutyLogParsingFunctionTimeout}"
+  memory_size      = "${var.GuardDuty_LogParsing_FunctionMemory}"
+  timeout          = "${var.GuardDuty_LogParsing_FunctionTimeout}"
   tracing_config {
     mode = "Active"
   }
 }
-resource "aws_iam_role" "Lambda_Function_GuardDuty_Log_Parsing_IAMRole" {
-  name = "${var.GuardDutyLogParsingFunctionRoleName}"
+## Lambda Execution Role for GuardDuty Parsing Function
+resource "aws_iam_role" "Lambda_Function_GuardDuty_Log_Parsing_IAM_Role" {
+  name = "${var.GuardDuty_LogParsing_Function_Name}-role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -245,6 +248,7 @@ resource "aws_iam_role_policy_attachment" "GDLogParsing_Lambda_Attach_AWSXrayWri
   role       = "${aws_iam_role.Lambda_Function_GuardDuty_Log_Parsing_IAMRole.name}"
   policy_arn = "${data.aws_iam_policy.Data_Policy_AWSXrayWriteOnlyAccess.arn}"
 }
+## Allows Source Invocation from S3 to fire off GuardDuty Parsing Function
 resource "aws_lambda_permission" "GuardDuty_Lambda_Bucket_Invocation_Permission" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
@@ -252,27 +256,32 @@ resource "aws_lambda_permission" "GuardDuty_Lambda_Bucket_Invocation_Permission"
   principal     = "s3.amazonaws.com"
   source_arn    = "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.arn}"
 }
+## Uploads the Inspector auto remediation Lambda file into S3
 resource "aws_s3_bucket_object" "Inspector_Remediation_Lambda_Object_Upload" {
   bucket = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
-  key    = "${var.LambdaUploadPrefix}/lambda-auto-remediate.zip"
-  source = "${var.PathToLambdaUpload}/lambda-auto-remediate.zip"
+  key    = "CMDS-Lambdas/lambda-auto-remediate.zip"
+  source = "${var.Path_To_Lambda_Upload}/lambda-auto-remediate.zip"
 }
+## Creates a Lambda function that is invoked from SNS to call Systems Manager Run Command to run updates on Debian and Amazon Linux based instances
+## SNS Topic will be configured from the Inspector end (not yet supported via Terraform) to emit on Findings to invoke the function
+## The Function will invoke multiple times per function hence the high memory & timeout
+## Systems Manager Run Command log outputs will show multiple failures (false negative) due to the concurrency limitations
 resource "aws_lambda_function" "Lambda_Function_Inspector_Remediation" {
   s3_bucket        = "${aws_s3_bucket.Lambda_Artifacts_S3_Bucket.id}"
   s3_key           = "${aws_s3_bucket_object.Inspector_Remediation_Lambda_Object_Upload.id}"
-  function_name    = "${var.InspectorRemediationFunctionName}"
-  description      = "${var.InspectorRemediationFunctionDescription}"
+  function_name    = "${var.Inspector_Remediation_Function_Name}"
+  description      = "Invokes SSM Run Command based on Inspector Findings from SNS"
   role             = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.arn}"
   handler          = "lambda-auto-remediate.lambda_handler"
   runtime          = "python2.7"
-  memory_size      = "${var.InspectorRemediationFunctionMemory}"
-  timeout          = "${var.InspectorRemediationFunctionTimeout}"
+  memory_size      = "${var.Inspector_Remediation_Function_Memory}"
+  timeout          = "${var.Inspector_Remediation_Function_Timeout}"
   tracing_config {
     mode = "Active"
   }
 }
 resource "aws_iam_role" "Lambda_Function_Inspector_Remediation_IAMRole" {
-  name = "${var.LambdaFunctionInspectorRemediationRoleName}"
+  name = "${var.Inspector_Remediation_Function_Name}-role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -305,13 +314,18 @@ resource "aws_iam_role_policy_attachment" "Remediation_Lambda_Attach_BasicLambda
   role       = "${aws_iam_role.Lambda_Function_Inspector_Remediation_IAMRole.name}"
   policy_arn = "${data.aws_iam_policy.Data_Policy_AWSLambdaBasicExecutionRole.arn}"
 }
+## SNS Topic that you will subscribed SNS to -- the Policy is created in an external Data document
+## You can optionally add encryption to this SNS topic
 resource "aws_sns_topic" "Inspector_Remediation_SNS_Topic" {
-  name = "${var.InspectorRemediationSNSTopicName}"
+  name = "${var.Inspector_Remediation_SNS_Topic_Name}"
 }
+## Within the Data Policy a Variable is passed for the ROOT Principal for the Inspector Service
+## Inspector's Service Account will emit the findings based on telemetry and needs Access to publish
 resource "aws_sns_topic_policy" "Inspector_Remediation_SNS_Topic_Policy" {
   arn    = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
   policy = "${data.aws_iam_policy_document.Inspector_Remediation_SNS_Topic_Policy_Data.json}"
 }
+## Gives SNS permission to invoke the Vulnerability Patching Function
 resource "aws_lambda_permission" "Inspector_Remediation_SNS_Lambda_Permission" {
   statement_id  = "AllowExecutionFromSNS"
   action        = "lambda:InvokeFunction"
@@ -319,13 +333,17 @@ resource "aws_lambda_permission" "Inspector_Remediation_SNS_Lambda_Permission" {
   principal     = "sns.amazonaws.com"
   source_arn    = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
 }
+## Subs Lambda to the SNS policy to get invoked
 resource "aws_sns_topic_subscription" "Inspector_Remediation_SNS_Subscription" {
   topic_arn = "${aws_sns_topic.Inspector_Remediation_SNS_Topic.arn}"
   protocol  = "lambda"
   endpoint  = "${aws_lambda_function.Lambda_Function_Inspector_Remediation.arn}"
 }
+## Creates an AWS Config Configuration Recorder -- this is a Regional resource and config must not have been enabled
+## Recording Group configuration will support all resoruces types to include IAM policies, roles, etc
+## The Name is actually abstracted from the user, it is only used by the API, will be "default" if not
 resource "aws_config_configuration_recorder" "Config_Configuration_Recorder" {
-  name     = "${var.ConfigurationRecorderName}"
+  name     = "${var.Config_Configuration_Recorder_Name}"
   role_arn = "${aws_iam_role.Config_IAM_Role.arn}"
 
   recording_group = {
@@ -333,19 +351,25 @@ resource "aws_config_configuration_recorder" "Config_Configuration_Recorder" {
     include_global_resource_types = true
   }
 }
+## Delivery Channel allows Config to emit Configuration History & State to S3
+## SNS is optional but you can subscribe downstream services such as Lambda to it
 resource "aws_config_delivery_channel" "Config_Configuration_Delivery_Channel" {
-  name           = "${var.ConfigurationDeliveryChannelName}"
+  name           = "${var.Config_Configuration_Delivery_Channel_Name}"
   s3_bucket_name = "${aws_s3_bucket.Config_Artifacts_S3_Bucket.bucket}"
   sns_topic_arn  = "${aws_sns_topic.Config_SNS_Topic.id}"
 }
+## This Terraform Resource will turn the Configuration Recorder "on"
+## Depends_On is passed to avoid a race condition
 resource "aws_config_configuration_recorder_status" "Config_Configuration_Recorder_Status" {
   name       = "${aws_config_configuration_recorder.Config_Configuration_Recorder.name}"
   is_enabled = true
   depends_on = ["aws_config_delivery_channel.Config_Configuration_Delivery_Channel"]
 }
+## Config will publish near real time Configuration changes into SNS
+## This SNS topic is encrypted via the KMS key set earlier -- any downstream services will also need access to it
 resource "aws_sns_topic" "Config_SNS_Topic" {
-  name              = "${var.ConfigSNSTopicName}"
-  kms_master_key_id = "${aws_kms_key.SNS_Customer_CMK.id}"
+  name              = "${var.Config_SNS_Topic_Name}"
+  kms_master_key_id = "${aws_kms_key.Config_Recorder_SNS_Customer_CMK.id}"
   policy = <<POLICY
 {
   "Id": "Policy_ID",
@@ -357,14 +381,37 @@ resource "aws_sns_topic" "Config_SNS_Topic" {
         "AWS": "${aws_iam_role.Config_IAM_Role.arn}"
       },
       "Action": "SNS:Publish",
-      "Resource": "arn:aws:sns::${data.aws_caller_identity.current.account_id}:${var.ConfigSNSTopicName}"
+      "Resource": "arn:aws:sns::${data.aws_caller_identity.current.account_id}:${var.Config_SNS_Topic_Name}"
     }
   ]
 }
 POLICY
 }
+## This is the S3 Bucket that Config will send the Config State files into
+resource "aws_s3_bucket" "Config_Artifacts_S3_Bucket" { 
+  bucket = "${var.Config_Artifacts_S3_Bucket_Name}"
+  acl    = "private"
+
+  versioning {
+      enabled = true
+  }
+
+  logging {
+    target_bucket = "${aws_s3_bucket.Server_Access_Log_S3_Bucket.id}"
+    target_prefix = "configaccess/"
+  }
+
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm     = "AES256"
+      }
+    }
+  }
+}
+## sts Assume Role for config -- attaching the default config service policy via Data resoruce
 resource "aws_iam_role" "Config_IAM_Role" {
-  name = "${var.ConfigIAMRoleName}"
+  name = "${var.Config_Configuration_Recorder_Name}-role"
   assume_role_policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -385,8 +432,9 @@ resource "aws_iam_role_policy_attachment" "Config_Role_Managed_Policy_Attachment
   role       = "${aws_iam_role.Config_IAM_Role.name}"
   policy_arn = "${data.aws_iam_policy.Data_Policy_AWSConfigRole.arn}"
 }
+## Policy is needed for the Delivery Channel -- gives access to the Config S3 Bucket & SNS Topic
 resource "aws_iam_role_policy" "Config_Role_Policy" {
-  name   = "${var.ConfigIAMRolePolicyName}"
+  name   = "${var.Config_Configuration_Recorder_Name}-policy"
   role   = "${aws_iam_role.Config_IAM_Role.id}"
   policy = <<POLICY
 {
@@ -413,9 +461,10 @@ resource "aws_iam_role_policy" "Config_Role_Policy" {
 }
 POLICY
 }
-
+## This S3 Bucket will collect HTTP Access Logs from all other defined S3 Buckets
+## Do not set access logging on itself otherwise you will have a large (and expensive) volume of logs in your bucket
 resource "aws_s3_bucket" "Server_Access_Log_S3_Bucket" {
-  bucket = "${var.ServerAccessLogS3BucketName}"
+  bucket = "${var.Server_Access_Log_S3_Bucket_Name}"
   acl    = "log-delivery-write"
 
   versioning {
@@ -430,38 +479,24 @@ resource "aws_s3_bucket" "Server_Access_Log_S3_Bucket" {
     }
   }
 }
-resource "aws_s3_bucket" "Config_Artifacts_S3_Bucket" { 
-  bucket = "${var.ConfigArtifactsBucketName}"
-  acl    = "private"
-
-  versioning {
-      enabled = true
-  }
-
-  logging {
-    target_bucket = "${aws_s3_bucket.Server_Access_Log_S3_Bucket.id}"
-    target_prefix = "configaccess/"
-  }
-
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm     = "AES256"
-      }
-    }
-  }
-}
+## No arguments are support for the Security Hub account -- Terraform simply calls the API to enable it
+## Config Recorder & Delivery Channel needs to be present in the account before Security Hub can be enabled programmatically
 resource "aws_securityhub_account" "Security_Hub_Enabled" {}
-// Hits SecHub API - turns it on for account Auto-Enables CIS Benchmark Rules -- need to turn on config first
+## This SNS Topic is where the CloudWatch Alarms will publish their findings to regarding the CIS AWS Benchmarks rules defined by Config
+## Both the Metric Filter & Alarms plus a subscribed-to SNS Topic are needed to achieve compliance
+## CIS_Compliance_ prefixes for Terraform Resource names will be referenced multiple times -- this was the basis behind the ComplianceMachineDon'tStop project
+## It is also encrypted by the Config SNS Key -- despite the name (Would be confusing either way since not all SNS topics in this file are encrypted)
 resource "aws_sns_topic" "CIS_Compliance_Alerts_SNS_Topic" {
-  name              = "${var.CISComplianceAlertsSNSTopicName}"
-  kms_master_key_id = "${aws_kms_key.SNS_Customer_CMK.id}" 
+  name              = "${var.CIS_Compliance_Alerts_SNS_Topic_Name}"
+  kms_master_key_id = "${aws_kms_key.Config_Recorder_SNS_Customer_CMK.id}" 
 }
+## This CloudWatch Logs Group is for CloudTrail to publish API Logs too, it is also called CIS Compliance since that is another CIS Benchmark
+## It actually makes up 4 checks -- Encrypted, Logged, Validated, Global
 resource "aws_cloudwatch_log_group" "CIS_Compliance_CloudWatch_LogsGroup" {
-  name = "${var.CISComplianceCloudWatchLogsGroupName}"
+  name = "${var.CIS_Compliance_CloudWatch_LogsGroup_Name}"
 }
 resource "aws_iam_role" "CloudWatch_LogsGroup_IAM_Role" {
-  name = "${var.CloudWatchLogsGroupRoleName}"
+  name = "${var.CIS_Compliance_CloudWatch_LogsGroup_Name}-role"
 
   assume_role_policy = <<EOF
 {
@@ -480,7 +515,7 @@ resource "aws_iam_role" "CloudWatch_LogsGroup_IAM_Role" {
 EOF
 }
 resource "aws_iam_role_policy" "CIS_Compliance_CloudWatch_LogsGroup_Policy" {
-  name   = "${var.CloudWatchLogsGroupPolicyName}"
+  name   = "${var.CIS_Compliance_CloudWatch_LogsGroup_Name}-policy"
   role   = "${aws_iam_role.CloudWatch_LogsGroup_IAM_Role.id}"
   policy = <<EOF
 {
@@ -495,15 +530,18 @@ resource "aws_iam_role_policy" "CIS_Compliance_CloudWatch_LogsGroup_Policy" {
         "logs:DescribeLogStreams"
       ],
       "Effect": "Allow",
-      "Resource": "${aws_cloudwatch_log_group.CIS_Compliance_CloudWatch_LogsGroup.arn}"
+      "Resource": "${aws_cloudwatch_log_group.CIS_Compliance_CloudWatch_LogsGroup.arn}*"
     }
   ]
 }
 EOF
 }
+## This CloudTrail Trail is called CIS Compliance as it was made with the Security Hub CIS benchmarks in mind
+## This Trail is Global (multi-regional) and has encrypion, validation and CloudWatch delivery configured to be in Compliance
+## This Trail also logs all Object-level Data Events for Lambda & S3 for enhanced auditing capabilities
 resource "aws_cloudtrail" "CIS_Compliance_CloudTrail_Trail" { 
-  name                          = "${var.CISComplianceCloudTrailName}" 
-  s3_bucket_name                = "${aws_s3_bucket.CloudTrail_Logs_S3_Bucket.id}"
+  name                          = "${var.CIS_Compliance_CloudTrail_Trail_Name}" 
+  s3_bucket_name                = "${aws_s3_bucket.CIS_Compliance_CloudTrail_Logs_S3_Bucket.id}"
   include_global_service_events = true
   is_multi_region_trail         = true
   enable_log_file_validation    = true
@@ -530,8 +568,10 @@ resource "aws_cloudtrail" "CIS_Compliance_CloudTrail_Trail" {
     }
   }
 }
-resource "aws_s3_bucket" "CloudTrail_Logs_S3_Bucket" {  
-  bucket = "${var.CloudTrailLogS3BucketName}" 
+## CloudTrail at a minimum needs a S3 bucket to set the API Logs too
+## The default created CloudTrail Bucket Policy is attached in-line of this Resource
+resource "aws_s3_bucket" "CIS_Compliance_CloudTrail_Logs_S3_Bucket" {  
+  bucket = "${var.CIS_Compliance_CloudTrail_Logs_S3_Bucket_Name}" 
   acl = "private"
 
   versioning {
@@ -559,7 +599,7 @@ resource "aws_s3_bucket" "CloudTrail_Logs_S3_Bucket" {
               "Service": "cloudtrail.amazonaws.com"
             },
             "Action": "s3:GetBucketAcl",
-            "Resource": "arn:aws:s3:::${var.CloudTrailLogS3BucketName}"
+            "Resource": "arn:aws:s3:::${var.CIS_Compliance_CloudTrail_Logs_S3_Bucket_Name}"
         },
         {
             "Sid": "AWSCloudTrailWrite",
@@ -568,7 +608,7 @@ resource "aws_s3_bucket" "CloudTrail_Logs_S3_Bucket" {
               "Service": "cloudtrail.amazonaws.com"
             },
             "Action": "s3:PutObject",
-            "Resource": "arn:aws:s3:::${var.CloudTrailLogS3BucketName}/*",
+            "Resource": "arn:aws:s3:::${var.CIS_Compliance_CloudTrail_Logs_S3_Bucket_Name}/*",
             "Condition": {
                 "StringEquals": {
                     "s3:x-amz-acl": "bucket-owner-full-control"
@@ -579,6 +619,7 @@ resource "aws_s3_bucket" "CloudTrail_Logs_S3_Bucket" {
 }
 POLICY
 }
+## These next resources are the CloudWatch Log Metric Filter & associated Alarms to be in compliance with CIS Benchmarks
 resource "aws_cloudwatch_log_metric_filter" "CIS_Unauthorized_API_Calls_Metric_Filter" {
   name           = "CIS-UnauthorizedAPICalls"
   pattern        = "{ ($.errorCode = \"*UnauthorizedOperation\") || ($.errorCode = \"AccessDenied*\") }"
@@ -919,13 +960,18 @@ resource "aws_cloudwatch_metric_alarm" "CIS_VPC_Changes_CW_Alarm" {
   alarm_actions             = ["${aws_sns_topic.CIS_Compliance_Alerts_SNS_Topic.arn}"]
   insufficient_data_actions = []
 }
+## This is the end of the CIS Compliance Cloudwatch Alarms & Metric Filters section
+
+## A crypto-office Group and associated IAM entities (policy, users, etc) were created to add something other than Root into the Key Adminstrators for the CMKs
+## It is not in good practice to rely on Root for high level administrative tasks -- and key adminstration should be led by a crypto officer of some sort anyway
+## If you know the term COMSEC Custodian -- this is essentially what it is
 resource "aws_iam_group" "KMS_Key_Admin_IAM_Group" {
-  name = "${var.CMKAdminsIAMGroupName}"
+  name = "${var.KMS_Key_Admin_IAM_Group_Name}"
 }
 resource "aws_iam_policy" "KMS_Key_Admin_IAM_Policy" {
-  name        = "${var.CMKAdminsIAMPolicyName}"
+  name        = "${var.KMS_Key_Admin_IAM_Group_Name}-policy"
   path        = "/"
-  description = "${var.CMKAdminsIAMPolicyDescription}"
+  description = "Allows Admin Privs for KMS to the KMS Key Admin Group - Managed by Terraform"
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -941,21 +987,25 @@ resource "aws_iam_policy" "KMS_Key_Admin_IAM_Policy" {
 EOF
 }
 resource "aws_iam_user" "KMS_Key_Admin_IAM_User" {
-  name = "${var.CMKAdminsIAMUserName}"
+  name = "${var.KMS_Key_Admin_IAM_User_Name}"
 }
 resource "aws_iam_group_policy_attachment" "KMS_Key_Admin_Group_IAM_Policy_Attachment" {
   group      = "${aws_iam_group.KMS_Key_Admin_IAM_Group.name}"
   policy_arn = "${aws_iam_policy.KMS_Key_Admin_IAM_Policy.arn}"
 }
 resource "aws_iam_group_membership" "KMS_Key_Admin_IAM_Group_Membership" {
-  name = "${var.CMKAdminIAMGroupMembershipName}"
+  name = "${var.KMS_Key_Admin_IAM_User_Name}-membership"
 
   users = ["${aws_iam_user.KMS_Key_Admin_IAM_User.name}"]
 
   group = "${aws_iam_group.KMS_Key_Admin_IAM_Group.name}"
 }
+## This KDF Stream is where you will send your CloudWatch Event-parsed GuardDuty findings into
+## The Stream will drop the findings into S3 which you will crawl with Glue, Query with Athena and Visualize with QuickSight
+## This was inspired by serverless findings AWS Security Blog Posts
+## You will need to write the Athena queries and setup QuickSight on your own as they are not supported by Terraform
 resource "aws_kinesis_firehose_delivery_stream" "GuardDuty_Finding_KDF_Delivery_Stream" {
-  name        = "${var.GuardDutyFindingKinesisFirehoseStreamName}"
+  name        = "${var.GuardDuty_Finding_KDF_Delivery_Stream_Name}"
   destination = "extended_s3"
   extended_s3_configuration {
     prefix          = "raw/firehose/"
@@ -965,8 +1015,9 @@ resource "aws_kinesis_firehose_delivery_stream" "GuardDuty_Finding_KDF_Delivery_
     buffer_interval = "${var.GuardDutyFindingKDFDeliveryStream_BufferInterval}"
   }
 }
+## Bucket where KDF will shoot GuardDuty findings into
 resource "aws_s3_bucket" "GuardDuty_Finding_KDF_Logs_Bucket" {
-  bucket = "${var.GuardDutyFindingsRawLogBucket}"
+  bucket = "${var.GuardDuty_Finding_KDF_Delivery_Stream}-bucket"
   acl    = "private"
   versioning {
     enabled = true
@@ -984,7 +1035,7 @@ resource "aws_s3_bucket" "GuardDuty_Finding_KDF_Logs_Bucket" {
   }
 }
 resource "aws_iam_role" "GuardDuty_Finding_KDF_Delivery_Stream_Role" {
-  name = "${var.GuardDutyFindingKinesisFirehoseStreamRoleName}"
+  name = "${var.GuardDuty_Finding_KDF_Delivery_Stream}-role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -1002,9 +1053,9 @@ resource "aws_iam_role" "GuardDuty_Finding_KDF_Delivery_Stream_Role" {
 EOF
 }
 resource "aws_iam_policy" "GuardDuty_Finding_KDF_Delivery_Stream_Role_Policy" {
-  name        = "${var.GuardDutyFindingKinesisFirehoseStreamPolicyName}"
+  name        = "${var.GuardDuty_Finding_KDF_Delivery_Stream}-policy"
   path        = "/"
-  description = "${var.GuardDutyFindingKinesisFirehoseStreamPolicyDescription}"
+  description = "Gives Firehose access to S3 Bucket - Managed by Terraform"
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -1033,9 +1084,11 @@ resource "aws_iam_role_policy_attachment" "GuardDuty_Finding_Stream_Role_Attachm
   role       = "${aws_iam_role.GuardDuty_Finding_KDF_Delivery_Stream_Role.name}"
   policy_arn = "${aws_iam_policy.GuardDuty_Finding_KDF_Delivery_Stream_Role_Policy.arn}"
 }
+## This CloudWatch Rue will take any GuardDuty Finding and send it to KDF
+## You can further scope down the syntax to specify certain findings and also send them to other places
 resource "aws_cloudwatch_event_rule" "GuardDuty_Finding_CloudWatch_Event_Rule" {
-  name          = "${var.GuardDutyFindingCloudWatchEventRuleName}"
-  description   = "${var.GuardDutyFindingCloudWatchEventRuleDescription}"
+  name          = "${var.GuardDuty_Finding_CloudWatch_Event_Rule_Name}"
+  description   = "Places GuardDuty findings into a KDF Delivery Stream - Managed by Terraform"
   event_pattern = <<PATTERN
 {
   "source": [
@@ -1048,7 +1101,7 @@ resource "aws_cloudwatch_event_rule" "GuardDuty_Finding_CloudWatch_Event_Rule" {
 PATTERN
 }
 resource "aws_iam_role" "GuardDuty_Finding_CWEtoKDF_Role" {
-  name = "${var.GuardDutyFindingCWEtoKDFRoleName}"
+  name = "${var.GuardDuty_Finding_CWEtoKDF_Role_Name}"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -1064,10 +1117,11 @@ resource "aws_iam_role" "GuardDuty_Finding_CWEtoKDF_Role" {
 }
 EOF
 }
+## Findings can either be placed as a single record or as a batch -- KDF automatically handles Sharding -- hence all that you need to specify is buffering
 resource "aws_iam_policy" "GuardDuty_Finding_CWEtoKDF_Role_Policy" {
-  name        = "${var.GuardDutyFindingCWEtoKDFRolePolicyName}"
+  name        = "${var.GuardDuty_Finding_CWEtoKDF_Role_Name}-policy"
   path        = "/"
-  description = "${var.GuardDutyFindingCWEtoKDFRolePolicyDescription}"
+  description = "Allows CWE to place records into a KDF Stream - Managed by Terraform"
   policy = <<EOF
 {
     "Version": "2012-10-17",
@@ -1090,11 +1144,14 @@ resource "aws_iam_role_policy_attachment" "GuardDuty_Finding_CWEtoKDF_Policy_Att
   role       = "${aws_iam_role.GuardDuty_Finding_CWEtoKDF_Role.name}"
   policy_arn = "${aws_iam_policy.GuardDuty_Finding_CWEtoKDF_Role_Policy.arn}"
 }
+## In the Console, you would Choose the target as you create the Event Rule -- Terraform needs to make a separate API call for this action
 resource "aws_cloudwatch_event_target" "GuardDuty_Finding_CloudWatch_Event_KDF_Target" {
   rule      = "${aws_cloudwatch_event_rule.GuardDuty_Finding_CloudWatch_Event_Rule.name}"
   arn       = "${aws_kinesis_firehose_delivery_stream.GuardDuty_Finding_KDF_Delivery_Stream.arn}"
   role_arn  = "${aws_iam_role.GuardDuty_Finding_CWEtoKDF_Role.arn}"
 }
+## This is an S3 Bucket Event -- anytime an object is placed within the prefix path (raw/firehose/) it will invoke the Lambda function
+## I grouped the Lambdas together -- hence why the S3 Permission and the rest of the function is further up in this file
 resource "aws_s3_bucket_notification" "GuardDuty_Finding_KDF_LogBucket_Object_Event" {
   bucket = "${aws_s3_bucket.GuardDuty_Finding_KDF_Logs_Bucket.id}"
   lambda_function {
@@ -1103,11 +1160,18 @@ resource "aws_s3_bucket_notification" "GuardDuty_Finding_KDF_LogBucket_Object_Ev
     filter_prefix       = "raw/firehose/"
   }
 }
+## Providers a Glue Catalog Database -- this is where the Crawler will partition out what it pulled from the Logs
+## This Data Catalog is also what will be reference when you write you SQL Queries in Athena
 resource "aws_glue_catalog_database" "GuardDuty_Findings_Parsed_DataCatalogDB" {
-  name = "${var.GuardDutyFindingsGlueDBName}"
+  name = "${var.GuardDuty_Findings_Parsed_DataCatalogDB_Name}"
 }
+## this Crawler runs on a Cron Expression every 15 Minutes to crawl and partition out the emitted Sorted Logs from the GD Findings Lambda
+## The Lambda function automatically changes the Path of its relationalized data it is fed from KDF
+## You can set the Cron to a much lower setting depending on the amount (lack of) GD Findings you may have
+## Also ensure that you go into this Crawler in the Console and select "Update Metadata" options in the schema change behavior
+## Underneath Glue & Athena is Apache HIVE (And some other MapReduce services) that will take a large crap on you if the metadata tables arent updated
 resource "aws_glue_crawler" "GuardDuty_Findings_Parsed_Glue_Crawler" {
-  name          = "${var.GuardDutyFindingsCrawlerName}"
+  name          = "${var.GuardDuty_Findings_Parsed_Glue_Crawler_Name}"
   database_name = "${aws_glue_catalog_database.GuardDuty_Findings_Parsed_DataCatalogDB.name}"
   role          = "${aws_iam_role.GuardDuty_Findings_Parsed_Glue_Crawler_Role.arn}"
   schedule      = "cron(0/15 * * * ? *)"
@@ -1119,7 +1183,7 @@ resource "aws_glue_crawler" "GuardDuty_Findings_Parsed_Glue_Crawler" {
   }
 }
 resource "aws_iam_role" "GuardDuty_Findings_Parsed_Glue_Crawler_Role" {
-  name = "${var.GuardDutyFindingsGlueCrawlerRoleName}"
+  name = "${var.GuardDuty_Findings_Parsed_Glue_Crawler_Name}-role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -1137,9 +1201,9 @@ resource "aws_iam_role" "GuardDuty_Findings_Parsed_Glue_Crawler_Role" {
 EOF
 }
 resource "aws_iam_policy" "GuardDuty_Findings_Parsed_Glue_Crawler_Role_S3Policy" {
-  name        = "${var.GuardDutyFindingsGlueCrawlerRoleS3PolicyName}"
+  name        = "${var.GuardDuty_Findings_Parsed_Glue_Crawler_Name}-policy"
   path        = "/"
-  description = "${var.GuardDutyFindingsGlueCrawlerRoleS3PolicyDescription}"
+  description = "Allows Glue to Retrieve and Send Objects from S3 - Managed by Terraform"
   policy = <<EOF
 {
     "Version": "2012-10-17",
