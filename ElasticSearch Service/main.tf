@@ -204,21 +204,17 @@ resource "aws_elasticsearch_domain" "CMDS_ES_ElasticSearch_Domain" {
     dedicated_master_type    = "${var.CMDS_ElasticSearch_Domain_Instance_Type}"
     dedicated_master_count   = "${var.CMDS_ElasticSearch_Domain_Instance_Count}"
   }
-
   ebs_options {
       ebs_enabled  = true
       volume_type  = "gp2"
       volume_size  = "25"
   }
-
   encrypt_at_rest {
       enabled = true
   }
-
   node_to_node_encryption {
       enabled = true
   }
-
   snapshot_options {
     automated_snapshot_start_hour = 23
   }
